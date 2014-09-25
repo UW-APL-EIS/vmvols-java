@@ -14,6 +14,8 @@ public class VMDKDiskTest extends junit.framework.TestCase {
 	protected void setUp() {
 	}
 
+	public void testNull() {
+	}
 	
 	public void testConstructor( File f ) throws Exception {
 		if( !f.exists() )
