@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>edu.uw.apl.commons</groupId>
+    <artifactId>vmvols-model</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+      <dependency>
+	<groupId>commons-io</groupId>
+	<artifactId>commons-io</artifactId>
+	<version>2.0.1</version>
+      </dependency>
+      <dependency>
+	<groupId>commons-codec</groupId>
+	<artifactId>commons-codec</artifactId>
+	<version>1.5</version>
+      </dependency>
+      <dependency>
+	<groupId>log4j</groupId>
+	<artifactId>log4j</artifactId>
+	<version>1.2.13</version>
+      </dependency>
+      <dependency>
+	<groupId>junit</groupId>
+	<artifactId>junit</artifactId>
+	<version>3.8</version>
+	<scope>test</scope>
+      </dependency>
+    </dependencies>
+
+    <build>
+      <defaultGoal>compile</defaultGoal>
+      <plugins>
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-compiler-plugin</artifactId>
+	<configuration>
+	  <source>1.5</source>
+	  <target>1.5</target>
+	</configuration>
+      </plugin>
+      </plugins>
+    </build>
+
+    <repositories>
+    </repositories>
+    
+</project>
