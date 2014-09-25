@@ -12,6 +12,8 @@ public class VBoxVMTest extends junit.framework.TestCase {
 
 	public void testAll() throws Exception {
 		File root = new File( "data/VBox" );
+		if( !root.isDirectory() )
+			return;
 		File[] fs = root.listFiles( new FileFilter() {
 				public boolean accept( File pathName ) {
 					return pathName.isDirectory();
