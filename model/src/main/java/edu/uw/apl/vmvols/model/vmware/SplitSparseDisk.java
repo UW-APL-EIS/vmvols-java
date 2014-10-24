@@ -28,8 +28,7 @@ import edu.uw.apl.vmvols.model.RandomAccessVolume;
 public class SplitSparseDisk extends VMDKDisk {
 
 	SplitSparseDisk( File f, Descriptor d ) {
-		super( f );
-		descriptor = d;
+		super( f, d );
 	}
 
 	@Override
@@ -55,9 +54,6 @@ public class SplitSparseDisk extends VMDKDisk {
 		throw new IllegalStateException( "To Implement..." );
 		//return null;
 	}
-
-	private final Descriptor descriptor;
-
 }
 
 // eof

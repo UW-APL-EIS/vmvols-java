@@ -1,6 +1,7 @@
 package edu.uw.apl.vmvols.model.virtualbox;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -14,10 +15,33 @@ import org.apache.log4j.Logger;
 import edu.uw.apl.vmvols.model.VirtualDisk;
 import edu.uw.apl.vmvols.model.VirtualMachine;
 
+/**
+ * To locate the virtual disk(s) in a VirtualBox vm directory, do this:
+ *
+ * File theDir = ....
+ * boolean b = VBoxVM.isVBox( theDir );
+ * if( b ) {
+ *   VBoxVM vm = new VBoxVM( theDir );
+ *   List<VirtualDisk> disks = vm.getActiveDisks();
+ * }
+ *
+ * An 'active' disk is one which would be written to were the VM to be
+ * running.  It is the 'current snapshot'.  This API also supports
+ * accessing any 'generation' (Snapshot) of any disk, all the way up
+ * the 'base disk', which is held in the file VirtualBox created when
+ * the VM was first built.
+ */
 public class VBoxVM extends VirtualMachine {
 
 	static public boolean isVBox( File dir ) {
-		File[] fs = dir.listFiles( VDIDisk.FILENAMEFILTER );
+		if( !dir.isDirectory() )
+			return false;
+		File[] fs = dir.listFiles( VBOXFILE );
+		// If we find a .vbox file we assert yes.
+		if( fs.length > 0 )
+			return true;
+		fs = dir.listFiles( VDIDisk.FILENAMEFILTER );
+		// If we find a .vdi file we assert yes.
 		if( fs.length > 0 )
 			return true;
 		// other files that VBox uses????
@@ -125,6 +149,25 @@ public class VBoxVM extends VirtualMachine {
 	private final File dir;
 	private final List<VDIDisk> disks;
 	private final Logger log;
+
+	// A VirtualBox vm dir always seems to have a .vbox file...
+	static public final FilenameFilter VBOXFILE =
+		new FilenameFilter() {
+			public boolean accept( File dir, String name ) {
+				return name.endsWith( ".vbox" );
+			}
+		};
+
+	// TODO: VirtualBox can also manage .vmdk files...
+	/*
+	static public final FilenameFilter VMDKFILE =
+		new FilenameFilter() {
+			public boolean accept( File dir, String name ) {
+				return name.endsWith( ".vbox" );
+			}
+		};
+	*/
 }
+
 
 // eof

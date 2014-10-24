@@ -44,7 +44,7 @@ public class SparseExtentHeader {
 		}
 		
 		// uint32...
-		flags = EndianUtils.readSwappedUnsignedInteger( ba, 8 );
+		flags = (int)EndianUtils.readSwappedUnsignedInteger( ba, 8 );
 		
 		/*
 		  The spec types the following fields as 'uint64' (via a
@@ -83,24 +83,37 @@ public class SparseExtentHeader {
 		
 		/*
 		  gives a read count of 79 bytes, which leaves 512-79 = 433
-		  bytes of padding. This agrees with the spec which notes:
+		  bytes of padding. This agrees with the spec, which notes:
 		  
 		  uint8 pad[433];
 		*/
 		
 	}
 
-	long getDescriptorOffset() {
-		return descriptorOffset * Constants.SECTORLENGTH;
+	public int flags() {
+		return flags;
+	}
+	
+	public long getDescriptorOffset() {
+		return descriptorOffset;
 	}
 
-	long getDescriptorSize() {
-		return descriptorSize * Constants.SECTORLENGTH;
+	public long getDescriptorOffsetBytes() {
+		return getDescriptorOffset() * Constants.SECTORLENGTH;
+	}
+
+	public long getDescriptorSize() {
+		return descriptorSize;
+	}
+
+	public long getDescriptorSizeBytes() {
+		return getDescriptorSize() * Constants.SECTORLENGTH;
 	}
 
 	// in sectors...
-	long grainDirOffset() {
-		return (flags & 0x2) == 0x2 ? rgdOffset : gdOffset;
+	public long grainDirOffset() {
+		return (flags & FLAGS_USEREDUNDANTGRAINTABLE )
+			== FLAGS_USEREDUNDANTGRAINTABLE ? rgdOffset : gdOffset;
 	}
 
 	public String paramString() {
@@ -112,11 +125,14 @@ public class SparseExtentHeader {
 		pw.println( "DescriptorOffset: " + descriptorOffset );
 		pw.println( "DescriptorSize: " + descriptorSize );
 		pw.println( "NumGTEsPerGT: " + numGTEsPerGT );
+		pw.println( "rgdOffset: " + rgdOffset );
+		pw.println( "gdOffset: " + gdOffset );
 		pw.println( "Overhead: " + overhead );
 		return sw.toString();
 	}
 	
-	final long flags, capacity, grainSize, gdOffset, rgdOffset, overhead;
+	final int flags;
+	final long capacity, grainSize, gdOffset, rgdOffset, overhead;
 	final long numGTEsPerGT;
 	final long descriptorOffset, descriptorSize;
 
@@ -126,6 +142,10 @@ public class SparseExtentHeader {
 	static public final long MAGICNUMBER = 0x564d444bL;
 
 	static public final int SIZEOF = 512;
+
+	static public final int FLAGS_USEREDUNDANTGRAINTABLE = (1 << 1);
+	static public final int FLAGS_COMPRESSEDGRAINS = (1 << 16);
+	static public final int FLAGS_HASGRAINMARKERS = (1 << 17);
 }
 
 // eof

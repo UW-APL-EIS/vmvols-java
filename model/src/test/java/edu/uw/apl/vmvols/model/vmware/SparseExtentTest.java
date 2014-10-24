@@ -69,7 +69,7 @@ public class SparseExtentTest extends junit.framework.TestCase {
 		File dir = new File( "data/vmware/splitsparse" );
 		if( !dir.isDirectory() )
 			return;
-		File[] fs = dir.listFiles( VMDKDisk.FILEFILTER );
+		File[] fs = dir.listFiles( VMDKDisk.FILENAMEFILTER );
 		Arrays.sort( fs );
 		for( File f : fs ) {
 			test( f );

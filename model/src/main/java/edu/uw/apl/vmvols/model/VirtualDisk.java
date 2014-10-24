@@ -21,6 +21,12 @@ abstract public class VirtualDisk {
 	public long sectorCount() {
 		return size() / Constants.SECTORLENGTH;
 	}
+
+	/**
+	 * Mimic what a physical disk would return for a low-level ATA
+	 * inquiry of its 'serial number'
+	 */
+	abstract public String getID();
 	
 	abstract public long size();
 

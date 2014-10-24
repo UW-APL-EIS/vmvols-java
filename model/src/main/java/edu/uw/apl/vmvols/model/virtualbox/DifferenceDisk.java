@@ -51,12 +51,6 @@ public class DifferenceDisk extends DynamicDisk {
 	VDIDisk getParent() {
 		return parent;
 	}
-	
-	//@Override
-	public String getID() {
-		checkParent();
-		return "TODO";// parent.getID();
-	}
 
 	@Override
 	public int getGeneration() {

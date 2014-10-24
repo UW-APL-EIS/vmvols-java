@@ -47,8 +47,9 @@ abstract public class VMDKDisk extends VirtualDisk {
 	  stored in chunks called 'grains'.
 	*/
 
-	public VMDKDisk( File f ) {
+	protected VMDKDisk( File f, Descriptor d  ) {
 		super( f );
+		descriptor = d;
 	}
 
 	/**
@@ -138,6 +139,11 @@ abstract public class VMDKDisk extends VirtualDisk {
 	public List<? extends VirtualDisk> getAncestors() {
 		throw new IllegalStateException( "TODO" );
 	}
+
+	@Override
+	public String getID() {
+		return "getID()-TODO";
+	}
 	
 	/*
 	public int hashCode() {
@@ -173,12 +179,12 @@ abstract public class VMDKDisk extends VirtualDisk {
 
 
 	//protected VMDKHeader header;
-	//protected Descriptor descriptor;
+	protected Descriptor descriptor;
 
 	protected VMDKDisk parent, child;
 	
 
-	static public final FilenameFilter FILEFILTER =
+	static public final FilenameFilter FILENAMEFILTER =
 		new FilenameFilter() {
 			public boolean accept( File dir, String name ) {
 				return name.endsWith( ".vmdk" );

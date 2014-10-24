@@ -48,8 +48,12 @@ public class SparseExtentHeaderTest extends junit.framework.TestCase {
 		if( !f.exists() )
 			return;
 		System.out.println( f );
-		SparseExtentHeader seh = VMDKDisk.locateSparseExtentHeader( f );
-		System.out.println( seh.paramString() );
+		try {
+			SparseExtentHeader seh = VMDKDisk.locateSparseExtentHeader( f );
+			System.out.println( seh.paramString() );
+		} catch( IllegalStateException ise ) {
+			System.err.println( f + " -> " + ise );
+		}
 	}
 }
 

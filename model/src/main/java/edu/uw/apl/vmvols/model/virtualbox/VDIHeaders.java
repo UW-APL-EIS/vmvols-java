@@ -164,8 +164,8 @@ public class VDIHeaders {
 	}
 
 	/**
-	   as per vbox.../include/iprt/uuid.h
-	*/
+	 * As per /path/to/vbox/include/iprt/uuid.h
+	 */
 	static class RTUUID {
 		public RTUUID( byte[] ba ) throws IOException {
 			u32TimeLow = EndianUtils.readSwappedUnsignedInteger( ba, 0 );

@@ -92,6 +92,12 @@ abstract public class VDIDisk extends VirtualDisk {
 	public VirtualDisk getActive() {
 		return child == null ? this : child.getActive();
 	}
+
+	@Override
+	public String getID() {
+		VDIDisk base = getBase();
+		return "VBox-" + base.header.imageCreationUUID();
+	}
 	
 	@Override
 	public long size() {

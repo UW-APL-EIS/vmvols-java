@@ -23,11 +23,6 @@ public class FixedDisk extends VDIDisk {
 		super( f, h );
 	}
 
-	//	@Override
-	public String getID() {
-		return "VBox-" + header.imageCreationUUID();
-	}
-
 	@Override
 	public int getGeneration() {
 		return 0;

@@ -30,7 +30,7 @@ import edu.uw.apl.vmvols.model.RandomAccessVolume;
 public class MonolithicSparseDisk extends VMDKDisk {
 
 	MonolithicSparseDisk( File f, SparseExtentHeader seh, Descriptor d ) {
-		super( f );
+		super( f, d );
 		extent = new SparseExtent( f, seh );
 	}
 

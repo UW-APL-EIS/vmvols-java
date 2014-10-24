@@ -26,13 +26,13 @@ import edu.uw.apl.vmvols.model.RandomAccessVolume;
 public class MonolithicStreamOptimizedDisk extends VMDKDisk {
 
 	MonolithicStreamOptimizedDisk( File f, SparseExtentHeader seh, Descriptor d ) {
-		super( f );
+		super( f, d );
 		extent = new StreamOptimizedSparseExtent( f, seh );
 	}
 
 	@Override
 	public long size() {
-		return extent.size();
+		return 0L;//extent.size();
 	}
 
 	@Override
@@ -42,12 +42,12 @@ public class MonolithicStreamOptimizedDisk extends VMDKDisk {
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return extent.getInputStream();
+		return null;//extent.getInputStream();
 	}
 
 	@Override
 	public RandomAccessVolume getRandomAccessVolume() throws IOException {
-		return extent.getRandomAccessVolume();
+		return null;//extent.getRandomAccessVolume();
 	}
 
 	private final StreamOptimizedSparseExtent extent;

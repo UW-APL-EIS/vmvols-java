@@ -43,10 +43,6 @@ public class NormalDisk extends DynamicDisk {
 		}
 	}
 
-	//	@Override
-	public String getID() {
-		return "VBox-" + header.imageCreationUUID();
-	}
 
 	@Override
 	public int getGeneration() {
