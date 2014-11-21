@@ -57,7 +57,7 @@ abstract public class VDIDisk extends VirtualDisk {
 		return (VDIDisk)getGeneration(0);
 	}
 
-	static public VDIDisk create( File hostVDIFile ) throws IOException {
+	static public VDIDisk readFrom( File hostVDIFile ) throws IOException {
 		VDIHeader h = VDIHeaders.parse( hostVDIFile );
 		VDIDisk result = null;
 		switch( (int)h.imageType() ) {
@@ -175,6 +175,7 @@ abstract public class VDIDisk extends VirtualDisk {
 			// 2: duplicate bme..
 			boolean isUnique = s.add( bme );
 			if( !isUnique ) {
+				System.err.println( s );
 				throw new VDIException
 					( "BlockMapEntry duplicate: " + bme +
 					  ". Corrupt vdi? " + getPath() );

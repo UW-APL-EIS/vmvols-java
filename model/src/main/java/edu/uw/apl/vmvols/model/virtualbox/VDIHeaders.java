@@ -35,7 +35,8 @@ public class VDIHeaders {
 			di.readFully( ba );
 			sig = EndianUtils.readSwappedUnsignedInteger( ba, 64 );
 			if( sig != VDI_IMAGE_SIGNATURE )
-				throw new VDIException( "VDI Signature missing" );
+				throw new VDIMissingSignatureException
+					( "VDI Signature missing" );
 			version = EndianUtils.readSwappedUnsignedInteger( ba, 68 );
 		}
 

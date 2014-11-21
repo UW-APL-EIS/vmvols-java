@@ -32,7 +32,7 @@ abstract public class VirtualDisk {
 
 	abstract public InputStream getInputStream() throws IOException;
 
-	abstract public RandomAccessVolume getRandomAccessVolume()
+	abstract public RandomAccessVirtualDisk getRandomAccess()
 		throws IOException;
 
 	abstract public int getGeneration();

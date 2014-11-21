@@ -7,7 +7,7 @@ import java.security.MessageDigest;
 
 import org.apache.commons.codec.binary.Hex;
 
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 import edu.uw.apl.vmvols.model.Utils;
 
 public class MD5Test extends junit.framework.TestCase {
@@ -16,11 +16,11 @@ public class MD5Test extends junit.framework.TestCase {
 		File f = new File( "data/VBox/nuga2/nuga2.vdi" );
 		if( !f.exists() )
 			return;
-		VDIDisk vd1 = VDIDisk.create( f );
+		VDIDisk vd1 = VDIDisk.readFrom( f );
 		testInputStream( vd1 );
-		VDIDisk vd2 = VDIDisk.create( f );
+		VDIDisk vd2 = VDIDisk.readFrom( f );
 		testRandomAccessVolume( vd2 );
-		VDIDisk vd3 = VDIDisk.create( f );
+		VDIDisk vd3 = VDIDisk.readFrom( f );
 		testSeekRandomAccessVolume( vd3 );
 	}
 
@@ -43,7 +43,7 @@ public class MD5Test extends junit.framework.TestCase {
 	
 	void testRandomAccessVolume( VDIDisk d, int blockSize ) throws IOException {
 		long start = System.currentTimeMillis();
-		RandomAccessVolume rav = d.getRandomAccessVolume();
+		RandomAccessVirtualDisk rav = d.getRandomAccess();
 		String s = Utils.md5sum( rav, blockSize );
 		System.out.println( d.getPath() + " " + blockSize + " " + s );
 		rav.close();
@@ -63,7 +63,7 @@ public class MD5Test extends junit.framework.TestCase {
 	void testSeekRandomAccessVolume( VDIDisk d, int blockSize )
 		throws IOException {
 		long start = System.currentTimeMillis();
-		RandomAccessVolume rav = d.getRandomAccessVolume();
+		RandomAccessVirtualDisk rav = d.getRandomAccess();
 
 		MessageDigest md5 = null;
 		try {

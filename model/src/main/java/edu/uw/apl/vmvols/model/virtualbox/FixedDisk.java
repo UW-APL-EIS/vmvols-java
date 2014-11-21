@@ -9,8 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
-import edu.uw.apl.vmvols.model.AbstractRandomAccessVolume;
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
    Preallocated base image file of a fixed size.
@@ -69,16 +68,15 @@ public class FixedDisk extends VDIDisk {
 	}
 
 	@Override
-	public RandomAccessVolume getRandomAccessVolume() throws IOException {
-		return new FixedDiskRandomAccessVolume();
+	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+		return new FixedDiskRandomAccess();
 	}
 
-	class FixedDiskRandomAccessVolume extends AbstractRandomAccessVolume {
-		FixedDiskRandomAccessVolume() throws IOException {
+	class FixedDiskRandomAccess extends RandomAccessVirtualDisk {
+		FixedDiskRandomAccess() throws IOException {
+			super( size() );
 			raf = new RandomAccessFile( source, "rw" );
 			raf.seek( header.dataOffset() );
-			size = size();
-			posn = 0;
 		}
 
 		@Override
@@ -87,13 +85,7 @@ public class FixedDisk extends VDIDisk {
 		}
 
 		@Override
-		public long length() throws IOException {
-			return size;
-		}
-
-		@Override
 		public void seek( long s ) throws IOException {
-			log.debug( getGeneration() + ".seek "+ s );
 			raf.seek( header.dataOffset() + s );
 			posn = s;
 		}
@@ -115,25 +107,15 @@ public class FixedDisk extends VDIDisk {
 		*/
 		   
 		@Override
-		public int read( byte[] ba, int off, int len ) throws IOException {
-
-			// checks from the contract for InputStream...
-			if( ba == null )
-				throw new NullPointerException();
-			if( off < 0 || len < 0 || off + len > ba.length ) {
-				logger.warn( "IOOBE: " + ba.length + " " + off + " "+ len );
-				throw new IndexOutOfBoundsException();
-			}
-			if( len == 0 )
-				return 0;
+		public int readImpl( byte[] ba, int off, int len ) throws IOException {
 			
-			if( posn >= size ) {
-				return -1;
-			}
-			
-			// do min in long space, since size - posn may overflow int...
+			// Do min in long space, since size - posn may overflow int...
 			long actualL = Math.min( size - posn, len );
-			int actual = (int)actualL;
+
+			// Cannot blindly coerce a long to int, result could be -ve
+			int actual = actualL > Integer.MAX_VALUE ? Integer.MAX_VALUE :
+				(int)actualL;
+
 			//logger.debug( "Actual " + actualL + " " + actual );
 			int total = 0;
 			while( total < actual ) {
@@ -152,26 +134,15 @@ public class FixedDisk extends VDIDisk {
 		   For the array write, we shall attempt to satify the length
 		   requested, even if it is takes us many writes (of the
 		   physical file) from different blocks to do so.
+
+		   LOOK: then why have we only one write ???
 		*/
 		   
 		@Override
-		public void write( byte[] ba, int off, int len ) throws IOException {
+		public void writeImpl( byte[] ba, int off, int len )
+			throws IOException {
 
 			log.debug( "Write.[BII: " + off + " " + len );
-
-			// checks from the contract for RandomAccessFile...
-			if( ba == null )
-				throw new NullPointerException();
-			if( off < 0 || len < 0 || off + len > ba.length ) {
-				logger.warn( ba.length + " " + off + " "+ len );
-				throw new IndexOutOfBoundsException();
-			}
-			if( len == 0 )
-				return;
-			
-			if( posn >= size ) {
-				return;
-			}
 
 			raf.write( ba, off, len );
 			if( log.isDebugEnabled() ) {
@@ -181,8 +152,6 @@ public class FixedDisk extends VDIDisk {
 		}
 
 		private final RandomAccessFile raf;
-		private final long size;
-		private long posn;
 	}
 }
 
