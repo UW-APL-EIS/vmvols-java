@@ -123,8 +123,8 @@ public class VBoxVM extends VirtualMachine {
 	
 	// any active disks are derivable from their base disk counterpart...
 	@Override
-	public List<? extends VirtualDisk> getActiveDisks() {
-		List<VDIDisk> result = new ArrayList<VDIDisk>( disks.size() );
+	public List<VirtualDisk> getActiveDisks() {
+		List<VirtualDisk> result = new ArrayList<VirtualDisk>( disks.size() );
 		for( VDIDisk d : disks ) {
 			result.add( (VDIDisk)d.getActive() );
 		}
