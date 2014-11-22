@@ -241,10 +241,11 @@ abstract public class VDIDisk extends VirtualDisk {
 	// child may be null
 	protected DifferenceDisk child;
 	
+	static public final String FILESUFFIX = ".vmdk";
 
-	static public final FilenameFilter FILENAMEFILTER = new FilenameFilter() {
+	static public final FilenameFilter FILEFILTER = new FilenameFilter() {
 			public boolean accept( File dir, String name ) {
-				return name.endsWith( ".vdi" );
+				return name.endsWith( FILESUFFIX );
 			}
 		};
 

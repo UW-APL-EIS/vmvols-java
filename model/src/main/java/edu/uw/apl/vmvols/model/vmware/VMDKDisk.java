@@ -53,8 +53,8 @@ abstract public class VMDKDisk extends VirtualDisk {
 	}
 
 	/**
-	   Any given .vmdk MAY start with a SparseExtentHeader...
-	*/
+	 *  Any given .vmdk MAY start with a SparseExtentHeader...
+	 */
 	static public SparseExtentHeader locateSparseExtentHeader( File f )
 		throws IOException {
 		RandomAccessFile raf = new RandomAccessFile( f, "r" );
@@ -94,12 +94,12 @@ abstract public class VMDKDisk extends VirtualDisk {
 		}
 	}
 	
-	static public VMDKDisk create( File f ) throws IOException {
+	static public VMDKDisk readFrom( File vmdkFile ) throws IOException {
 		VMDKDisk result = null;
 
 		Descriptor d = null;
 		try {
-			d = locateDescriptor( f );
+			d = locateDescriptor( vmdkFile );
 			if( d == null )
 				return null;
 		} catch( IllegalStateException ise ) {
@@ -108,10 +108,13 @@ abstract public class VMDKDisk extends VirtualDisk {
 		String type = d.getCreateType().intern();
 		if( false ) {
 		} else if( "monolithicSparse" == type ) {
-			SparseExtentHeader seh = locateSparseExtentHeader( f );
-			result = new MonolithicSparseDisk( f, seh, d );
+			SparseExtentHeader seh = locateSparseExtentHeader( vmdkFile );
+			result = new MonolithicSparseDisk( vmdkFile, seh, d );
 		} else if( "twoGbMaxExtentSparse" == type ) {
-			result = new SplitSparseDisk( f, d );
+			result = new SplitSparseDisk( vmdkFile, d );
+		} else if( "streamOptimized" == type ) {
+			SparseExtentHeader seh = locateSparseExtentHeader( vmdkFile );
+			result = new MonolithicStreamOptimizedDisk( vmdkFile, seh, d );
 		} else {
 			// to finish..
 			throw new IllegalStateException( "Disk type not supported: "
@@ -183,11 +186,12 @@ abstract public class VMDKDisk extends VirtualDisk {
 
 	protected VMDKDisk parent, child;
 	
+	static public final String FILESUFFIX = ".vmdk";
 
-	static public final FilenameFilter FILENAMEFILTER =
+	static public final FilenameFilter FILEFILTER =
 		new FilenameFilter() {
 			public boolean accept( File dir, String name ) {
-				return name.endsWith( ".vmdk" );
+				return name.endsWith( FILESUFFIX );
 			}
 		};
 		

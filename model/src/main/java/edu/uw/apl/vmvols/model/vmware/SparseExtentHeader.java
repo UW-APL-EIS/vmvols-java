@@ -21,7 +21,9 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 public class SparseExtentHeader {
 	
 	/**
-	 * @param ba expected 512 bytes from start of .vmdk file...
+	 * @param ba expected 512 bytes extracted from a .vmdk file.
+	 * Normally at file start, but streamOptimized disks have
+	 * footers (matching header layout) near end of file.
 	 */
 	public SparseExtentHeader( byte[] ba ) throws IOException {
 
@@ -36,7 +38,7 @@ public class SparseExtentHeader {
 		}
 		
 		// uint32...
-		long version = EndianUtils.readSwappedUnsignedInteger( ba, 4 );
+		version = EndianUtils.readSwappedUnsignedInteger( ba, 4 );
 		boolean allowVersion2Plus = true;
 		if( version != 1 && !allowVersion2Plus ) {
 			throw new IllegalStateException
@@ -78,8 +80,8 @@ public class SparseExtentHeader {
 		int doubleEndLineChar2 = ba[76] & 0xff;
 		
 		// uint16...
-		int compressAlgorithm =
-			EndianUtils.readSwappedUnsignedShort( ba,77);
+		compressAlgorithm =
+			EndianUtils.readSwappedUnsignedShort( ba,77 );
 		
 		/*
 		  gives a read count of 79 bytes, which leaves 512-79 = 433
@@ -120,6 +122,7 @@ public class SparseExtentHeader {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter( sw );
 		pw.printf( "Flags: %08x\n", flags );
+		pw.println( "Version: " + version );
 		pw.println( "Capacity: " + capacity );
 		pw.println( "GrainSize: " + grainSize );
 		pw.println( "DescriptorOffset: " + descriptorOffset );
@@ -128,14 +131,17 @@ public class SparseExtentHeader {
 		pw.println( "rgdOffset: " + rgdOffset );
 		pw.println( "gdOffset: " + gdOffset );
 		pw.println( "Overhead: " + overhead );
+		pw.println( "Compression: " + compressAlgorithm );
 		return sw.toString();
 	}
 	
+	final long version;
 	final int flags;
 	final long capacity, grainSize, gdOffset, rgdOffset, overhead;
 	final long numGTEsPerGT;
 	final long descriptorOffset, descriptorSize;
-
+	final int compressAlgorithm;
+	
 	private Logger logger;
 	
 	// #define SPARSE_MAGICNUMBER 0x564d444b /* 'V' 'M' 'D' 'K' */

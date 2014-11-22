@@ -66,7 +66,7 @@ public class VBoxVM extends VirtualMachine {
 		
 		File[] vdis = vboxDir.listFiles( VDIDisk.FILENAMEFILTER );
 		for( File vdi : vdis ) {
-			VDIDisk vd = VDIDisk.create( vdi );
+			VDIDisk vd = VDIDisk.readFrom( vdi );
 			disks.add( vd );
 		}
 
@@ -80,7 +80,7 @@ public class VBoxVM extends VirtualMachine {
 			for( File f : vdis ) {
 				VDIDisk vd = null;
 				try {
-					vd = VDIDisk.create( f );
+					vd = VDIDisk.readFrom( f );
 				} catch( VDIException parseFailure ) {
 					log.warn( parseFailure );
 					continue;

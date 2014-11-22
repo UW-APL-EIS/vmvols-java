@@ -18,7 +18,7 @@ import org.apache.commons.io.EndianUtils;
 import org.apache.log4j.Logger;
 
 import edu.uw.apl.vmvols.model.Constants;
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
    Disk type 0:
@@ -50,8 +50,8 @@ public class MonolithicSparseDisk extends VMDKDisk {
 	}
 
 	@Override
-	public RandomAccessVolume getRandomAccessVolume() throws IOException {
-		return extent.getRandomAccessVolume();
+	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+		return extent.getRandomAccess();
 	}
 
 	private final SparseExtent extent;

@@ -17,7 +17,7 @@ import org.apache.commons.io.EndianUtils;
 
 import org.apache.log4j.Logger;
 
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
    Disk type 1:
@@ -50,7 +50,7 @@ public class SplitSparseDisk extends VMDKDisk {
 	}
 
 	@Override
-	public RandomAccessVolume getRandomAccessVolume() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
 		throw new IllegalStateException( "To Implement..." );
 		//return null;
 	}
