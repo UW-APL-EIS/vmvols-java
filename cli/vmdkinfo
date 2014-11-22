@@ -1,0 +1,12 @@
+#!/bin/sh
+
+ARTIFACT=vmvols-cli
+VERSION=1.0-SNAPSHOT
+JAR=$ARTIFACT-$VERSION.jar
+
+PACKAGE=edu.uw.apl.vmvols.cli
+CLAZZ=VMDKInfo
+
+exec java -cp target/$JAR $PACKAGE.$CLAZZ "$@"
+
+# eof
