@@ -13,11 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 import org.apache.commons.io.EndianUtils;
-import org.apache.log4j.Logger;
 
 /**
    see also ./VDICore.h for reference and VBoxManage for the public api...
@@ -40,7 +40,6 @@ abstract public class VDIDisk extends VirtualDisk {
 	protected VDIDisk( File f, VDIHeader h ) {
 		super( f );
 		header = h;
-		log = Logger.getLogger( getClass() );
 	}
 
 	public void setChild( DifferenceDisk dd ) {
@@ -48,14 +47,10 @@ abstract public class VDIDisk extends VirtualDisk {
 		dd.setParent( this );
 	}
 
-	// may be null, ok.  Assume caller knows this...
-	public DifferenceDisk getChild() {
-		return child;
+	public VDIHeader getHeader() {
+		return header;
 	}
 	
-	public VDIDisk getBase() {
-		return (VDIDisk)getGeneration(0);
-	}
 
 	static public VDIDisk readFrom( File hostVDIFile ) throws IOException {
 		VDIHeader h = VDIHeaders.parse( hostVDIFile );
@@ -95,8 +90,8 @@ abstract public class VDIDisk extends VirtualDisk {
 
 	@Override
 	public String getID() {
-		VDIDisk base = getBase();
-		return "VBox-" + base.header.imageCreationUUID();
+		VirtualDisk base = getBase();
+		return "VDI-" + base.getUUID();
 	}
 	
 	@Override
@@ -110,13 +105,16 @@ abstract public class VDIDisk extends VirtualDisk {
 		return null;//		return getBase().getPath();
 	}
 
-	public String imageParentUUID() {
-		return header.imageParentUUID();
-	}
-	
-	public String imageCreationUUID() {
+	@Override
+	public UUID getUUID() {
 		return header.imageCreationUUID();
 	}
+
+	@Override
+	public UUID getUUIDParent() {
+		return header.imageParentUUID();
+	}
+
 	
 	public int imageType() {
 		return (int)header.imageType();
@@ -235,13 +233,12 @@ abstract public class VDIDisk extends VirtualDisk {
 
 	protected int[] blockMap;
 
-	protected final Logger log;
 	protected final VDIHeader header;
 	
 	// child may be null
-	protected DifferenceDisk child;
+	//	protected DifferenceDisk child;
 	
-	static public final String FILESUFFIX = ".vmdk";
+	static public final String FILESUFFIX = "vdi";
 
 	static public final FilenameFilter FILEFILTER = new FilenameFilter() {
 			public boolean accept( File dir, String name ) {

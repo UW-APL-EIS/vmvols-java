@@ -42,33 +42,6 @@ public class NormalDisk extends DynamicDisk {
 		}
 	}
 
-
-	@Override
-	public int getGeneration() {
-		return 0;
-	}
-
-	@Override
-	public VirtualDisk getGeneration( int i ) {
-		if( i == 0 )
-			return this;
-		if( child != null )
-			return child.getGeneration( i );
-		throw new IllegalStateException( "NormalDisk.getGeneration query " + i);
-	}
-
-	@Override
-	public VirtualDisk getActive() {
-		if( child == null )
-			return this;
-		return child.getActive();
-	}
-
-	@Override
-	public List<VirtualDisk> getAncestors() {
-		return Collections.emptyList();
-	}
-	
 	@Override
 	public InputStream getInputStream() throws IOException {
 		readBlockMap();

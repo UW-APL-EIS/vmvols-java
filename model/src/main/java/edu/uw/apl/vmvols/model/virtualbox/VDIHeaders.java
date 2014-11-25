@@ -4,6 +4,9 @@ import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.UUID;
 
 import org.apache.commons.io.EndianUtils;
 
@@ -107,15 +110,43 @@ public class VDIHeaders {
 			// RTUUID          uuidModify
 			// RTUUID          uuidLinkage;
 
-			byte[] uuid = new byte[RTUUID.SIZEOF];
+			/*
+			  byte[] uuid = new byte[RTUUID.SIZEOF];
 
 			System.arraycopy( ba, 316, uuid, 0, uuid.length );
 			uuidCreate = new RTUUID( uuid );
 
 			System.arraycopy( ba, 316+2*RTUUID.SIZEOF, uuid, 0, uuid.length );
 			uuidLinkage = new RTUUID( uuid );
+			*/
+
+			uuidCreate = readFrom( ba, 316 );
+			uuidLinkage = readFrom( ba, 316+32 );
+			
+			
 		}
 
+		static private UUID readFrom( byte[] ba, int offset ) {
+			long timeLow = EndianUtils.readSwappedUnsignedInteger
+				( ba, offset );
+			int timeMidI = EndianUtils.readSwappedUnsignedShort
+				( ba, offset + 4 );
+			long timeMid = timeMidI & 0xffffffffL;
+			int versionTimeHiI = EndianUtils.readSwappedUnsignedShort
+				( ba, offset + 6 );
+			long versionTimeHi = versionTimeHiI & 0xffffffffL;
+			long msb = (timeLow << 32) | (timeMid << 16) | versionTimeHi;
+
+			/*		int reservedClockSeqI = EndianUtils.readSwappedUnsignedShort
+				( ba, offset + 10 );
+			long reservedClockSeq = reservedClockSeqI & 0xffffffffL;
+			*/
+			long lsb = 0;
+			for( int i = 0; i < 8; i++ )
+				lsb |= (ba[offset+8+i] & 0xffL) << (56 - 8*i);
+			return new UUID( msb, lsb );
+		}
+			
 		@Override
 		public long imageType() {
 			return type;
@@ -147,21 +178,32 @@ public class VDIHeaders {
 		}
 
 		@Override
-		public String imageCreationUUID() {
-			return uuidCreate.toString();
+		public UUID imageCreationUUID() {
+			return uuidCreate;
 		}
 
 		@Override
-		public String imageParentUUID() {
-			return uuidLinkage.toString();
+		public UUID imageParentUUID() {
+			return uuidLinkage;
 		}
 
+		@Override
+		public String toString() {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter( sw );
+			pw.println( "type: " + type );
+			pw.println( "uuidCreate: " + uuidCreate );
+			pw.println( "uuidParent: " + uuidLinkage );
+			return sw.toString();
+		}
+		
 		// all these are defined as uint32_t in VDICore, so need longs here..
 		long type;
 		long blocksOffset, dataOffset, diskSize;
 		long blockSize;
 		long blockCount;
-		RTUUID uuidCreate, uuidLinkage;
+		UUID uuidCreate;
+		UUID uuidLinkage;
 	}
 
 	/**

@@ -37,20 +37,25 @@ public class DifferenceDisk extends DynamicDisk {
 	   know...
 	*/
 	void setParent( VDIDisk d ) {
-		String linkage = header.imageParentUUID();
+		/*
+		String linkage = null;//header.imageParentUUID();
 		if( !linkage.equals( d.header.imageCreationUUID() ) ) {
 			throw new IllegalArgumentException
 				( "Linkage mismatch setting parent " + source + "," +
 				  d.getPath() );
 		}
 		parent = d;
+		*/
 	}
 
 	// not checking parent here, just return what we have...
-	VDIDisk getParent() {
+	/*
+	  VDIDisk getParent() {
 		return parent;
 	}
+	*/
 
+	/*
 	@Override
 	public int getGeneration() {
 		checkParent();
@@ -71,7 +76,9 @@ public class DifferenceDisk extends DynamicDisk {
 		throw new IllegalStateException( "DifferenceDisk.getGeneration query "
 										 + i);
 	}
-
+	*/
+	
+	/*
 	@Override
 	public List<? extends VirtualDisk> getAncestors() {
 		List<VDIDisk> result = new ArrayList<VDIDisk>();
@@ -82,23 +89,23 @@ public class DifferenceDisk extends DynamicDisk {
 		}
 		return result;
 	}
-	
+	*/
 
 	@Override
 	public InputStream getInputStream() throws IOException {
 		readBlockMap();
 		//		checkParent();
-		InputStream pis = null;//parent.getInputStream();
-		return new DifferenceDiskRandomAccess( (RandomAccessVirtualDisk)pis,
-											   false );
+		InputStream parentIS = parent.getInputStream();
+		return new DifferenceDiskRandomAccess
+			( (RandomAccessVirtualDisk)parentIS, false );
 	}
 
 	@Override
 	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
 		readBlockMap();
 		checkParent();
-		RandomAccessVirtualDisk pra = parent.getRandomAccess();
-		return new DifferenceDiskRandomAccess( pra, true );
+		RandomAccessVirtualDisk parentRA = parent.getRandomAccess();
+		return new DifferenceDiskRandomAccess( parentRA, true );
 	}
 
 	private void checkParent() {
@@ -304,7 +311,7 @@ public class DifferenceDisk extends DynamicDisk {
 		private int bmePrev;
 	}
 
-	private VDIDisk parent;
+	//	private VDIDisk parent;
 }
 
 // eof

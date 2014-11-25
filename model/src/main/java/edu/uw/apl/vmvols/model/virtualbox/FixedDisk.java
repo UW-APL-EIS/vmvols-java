@@ -22,7 +22,8 @@ public class FixedDisk extends VDIDisk {
 		super( f, h );
 	}
 
-	@Override
+	/*
+	  @Override
 	public int getGeneration() {
 		return 0;
 	}
@@ -37,17 +38,11 @@ public class FixedDisk extends VDIDisk {
 	}
 
 	@Override
-	public VirtualDisk getActive() {
-		if( child == null )
-			return this;
-		return child.getActive();
-	}
-
-	@Override
 	public List<VirtualDisk> getAncestors() {
 		return Collections.emptyList();
 	}
-
+	*/
+	
 	
 	@Override
 	long contiguousStorage() {

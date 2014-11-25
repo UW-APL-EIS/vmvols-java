@@ -1,13 +1,15 @@
 package edu.uw.apl.vmvols.model.virtualbox;
 
-interface VDIHeader {
+import java.util.UUID;
+
+public interface VDIHeader {
 	long imageType();
 	long blocksOffset();
 	long dataOffset();
 	long blockSize();
 	long blockCount();
-	String imageCreationUUID();
-	String imageParentUUID();
+	UUID imageCreationUUID();
+	UUID imageParentUUID();
 	long diskSize();
 }
 

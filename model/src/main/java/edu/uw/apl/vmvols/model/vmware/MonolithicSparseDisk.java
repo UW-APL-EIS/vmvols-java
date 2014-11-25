@@ -46,12 +46,16 @@ public class MonolithicSparseDisk extends VMDKDisk {
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return extent.getInputStream();
+		InputStream parentIS = parent == null ? null :
+			parent.getInputStream();
+		return extent.getInputStream( parentIS );
 	}
 
 	@Override
 	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
-		return extent.getRandomAccess();
+		RandomAccessVirtualDisk parentRA = parent == null ? null :
+			parent.getRandomAccess();
+		return extent.getRandomAccess( parentRA );
 	}
 
 	private final SparseExtent extent;

@@ -137,20 +137,22 @@ public class SparseExtent {
 	}
 	*/
 
-	InputStream getInputStream() throws IOException {
+	InputStream getInputStream( InputStream parentIS ) throws IOException {
 		readMetaData();
 		buildZeroGrains();
-		return new SparseExtentRandomAccess( false );
+		return new SparseExtentRandomAccess
+			( false, (RandomAccessVirtualDisk)parentIS );
 	}
 
-	RandomAccessVirtualDisk getRandomAccess() throws IOException {
+	RandomAccessVirtualDisk getRandomAccess( RandomAccessVirtualDisk parentRA )
+		throws IOException {
 		readMetaData();
 		buildZeroGrains();
-		return new SparseExtentRandomAccess( true );
+		return new SparseExtentRandomAccess( true, parentRA );
 	}
 
 	/*
-	  The SparseExtentInputStream does the real work.  It presents a
+	  The SparseExtentRandomAccess does the real work.  It presents a
 	  standard InputStream functionality interface to clients, which
 	  call any combo of read, skip, etc. These operations move a
 	  logical 'file pointer' forwards (just like would occur for real
@@ -175,8 +177,11 @@ public class SparseExtent {
 
 		   Called only within this class, local access...
 		*/
-		SparseExtentRandomAccess( boolean writable ) throws IOException {
+		SparseExtentRandomAccess( boolean writable,
+								  RandomAccessVirtualDisk parentRA )
+			throws IOException {
 			super( size() );
+			this.parentRA = parentRA;
 			String mode = writable ? "rw" : "r";
 			raf = new RandomAccessFile( source, mode );
 			dPos();

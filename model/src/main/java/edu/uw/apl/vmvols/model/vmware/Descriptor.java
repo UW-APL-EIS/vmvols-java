@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -39,6 +40,17 @@ public class Descriptor {
 				Matcher m = reType.matcher( line );
 				if( m.matches() ) {
 					type = m.group(1);
+					continue;
+				}
+				m = reUUIDImage.matcher( line );
+				if( m.matches() ) {
+					uuidImage = UUID.fromString( m.group(1) );
+					continue;
+				}
+				m = reUUIDParent.matcher( line );
+				if( m.matches() ) {
+					uuidParent = UUID.fromString( m.group(1) );
+					continue;
 				}
 			}
 		} catch( IOException never ) {
@@ -57,8 +69,20 @@ public class Descriptor {
 	static private final Pattern reType = Pattern.compile
 		( "createType=\"([A-Za-z]+)\"" );
 	
-	private final String data;
-	private String type;
+	// e1246c7c-05dd-48c5-aa5b-5ad44ce0c13e
+	static final String REUUID =
+		"\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-" +
+		"\\p{XDigit}{12}";
+
+	static private final Pattern reUUIDImage = Pattern.compile
+		( "ddb\\.uuid\\.image=\"(" + REUUID + ")\"" );
+
+	static private final Pattern reUUIDParent = Pattern.compile
+		( "ddb\\.uuid\\.parent=\"(" + REUUID + ")\"" );
+	
+	final String data;
+	String type;
+	UUID uuidImage, uuidParent;
 }
 
 // eof

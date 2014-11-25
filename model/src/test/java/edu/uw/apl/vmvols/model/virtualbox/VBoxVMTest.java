@@ -8,6 +8,12 @@ import java.util.List;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
+/**
+ * Tests for {@link VBoxVM}
+ *
+ * @author Stuart Maclean
+ */
+
 public class VBoxVMTest extends junit.framework.TestCase {
 
 	public void testAll() throws Exception {
@@ -36,20 +42,34 @@ public class VBoxVMTest extends junit.framework.TestCase {
 		System.out.println( "Name: " + vm.getName() );
 		System.out.println( "Base: " + vm.getBaseDisks() );
 		System.out.println( "Active: " + vm.getActiveDisks() );
+
+		System.out.println( "ActiveDisks:" );
 		for( VirtualDisk vd : vm.getActiveDisks() ) {
-			VDIDisk vdi = (VDIDisk)vd;
-			report( vdi );
-			for( VirtualDisk an : vdi.getAncestors() ) {
+			report( vd );
+			/*
+			  for( VirtualDisk an : vdi.getAncestors() ) {
 				VDIDisk vdian = (VDIDisk)an;
 				report( vdian );
 			}
+			*/
+		}
+
+		System.out.println( "BaseDisks:" );
+		for( VirtualDisk vd : vm.getBaseDisks() ) {
+			report( vd );
+			/*
+			  for( VirtualDisk an : vdi.getAncestors() ) {
+				VDIDisk vdian = (VDIDisk)an;
+				report( vdian );
+			}
+			*/
 		}
 	}
 
-	void report( VDIDisk vdi ) {
-		System.out.println( "Generation: " + vdi.getGeneration() );
-		System.out.println( "Create: " + vdi.imageCreationUUID() );
-		System.out.println( "Parent: " + vdi.imageParentUUID() );
+	void report( VirtualDisk vd ) {
+		System.out.println( "Generation: " + vd.getGeneration() );
+		System.out.println( "Create: " + vd.getUUID() );
+		System.out.println( "Parent: " + vd.getUUIDParent() );
 	}
 }
 

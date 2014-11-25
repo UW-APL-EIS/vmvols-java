@@ -7,6 +7,11 @@ import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
 
+/**
+ * Tests for {@link Descriptor}
+ *
+ * @author Stuart Maclean
+ */
 public class DescriptorTest extends junit.framework.TestCase {
 	
 	protected void setUp() {
@@ -34,7 +39,7 @@ public class DescriptorTest extends junit.framework.TestCase {
 		testDir( dir );
 	}
 		
-	public void _testVBoxHome() {
+	public void testVBoxHome() {
 		File dir = new File( "/home/stuart/VBox" );
 		if( !dir.isDirectory() )
 			return;
@@ -62,11 +67,17 @@ public class DescriptorTest extends junit.framework.TestCase {
 	}
 	
 	public void testDescriptor( File f ) throws Exception {
-		if( !f.exists() )
+		if( !f.exists() || f.length() == 0 )
 			return;
 		System.out.println( f );
 		Descriptor d = VMDKDisk.locateDescriptor( f );
 		System.out.println( d );
+		assertTrue( "" + f, d.type != null );
+		// We cannot process vmfs files, which don't have ddb.uuid.* fields
+		if( d.type.equals( "vmfs" ) )
+			return;
+		assertTrue( "" + f, d.uuidImage != null );
+		assertTrue( "" + f, d.uuidParent != null );
 	}
 }
 

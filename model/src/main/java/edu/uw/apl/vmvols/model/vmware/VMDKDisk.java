@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.EndianUtils;
 import org.apache.commons.io.FileUtils;
@@ -18,8 +19,6 @@ import org.apache.log4j.Logger;
 
 import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.VirtualDisk;
-
-
 
 /**
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
@@ -124,28 +123,19 @@ abstract public class VMDKDisk extends VirtualDisk {
 	}
 
 	@Override
-	public int getGeneration() {
-		throw new IllegalStateException( "TODO" );
+	public UUID getUUID() {
+		return descriptor.uuidImage;
+	}
+
+	@Override
+	public UUID getUUIDParent() {
+		return descriptor.uuidParent;
 	}
 	
 	@Override
-	public VirtualDisk getGeneration( int i ) {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public VirtualDisk getActive() {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public List<? extends VirtualDisk> getAncestors() {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public String getID() {
-		return "getID()-TODO";
+ 	public String getID() {
+		VirtualDisk base = getBase();
+		return "VMDK-" + base.getUUID();
 	}
 	
 	/*
@@ -184,9 +174,9 @@ abstract public class VMDKDisk extends VirtualDisk {
 	//protected VMDKHeader header;
 	protected Descriptor descriptor;
 
-	protected VMDKDisk parent, child;
+	//protected VMDKDisk parent, child;
 	
-	static public final String FILESUFFIX = ".vmdk";
+	static public final String FILESUFFIX = "vmdk";
 
 	static public final FilenameFilter FILEFILTER =
 		new FilenameFilter() {

@@ -209,7 +209,6 @@ public class StreamOptimizedSparseExtent {
 	class StreamOptimizedRandomAccess extends RandomAccessVirtualDisk {
 		StreamOptimizedRandomAccess() throws IOException {
 			super( size() );
-			this.parentRA = null;
 			raf = new RandomAccessFile( source, "r" );
 			dPos();
 			compressedGrainBuffer = new byte[(int)(2*grainSizeBytes)];
@@ -261,9 +260,6 @@ public class StreamOptimizedSparseExtent {
 				long[] gt = grainDirectory[gdIndex];
 				if( false ) {
 				} else if( gt == SparseExtent.PARENTGDE ) {
-					if( parentRA != null ) {
-						// look, read from parent...
-					}
 					log.debug( "Zero GD : " + gdIndex );
 					int grainTableOffset = (int)
 						(gtIndex * grainSizeBytes + gOffset);
@@ -291,22 +287,15 @@ public class StreamOptimizedSparseExtent {
 					} else if( gte == 0 ) {
 						if( log.isDebugEnabled() )
 							log.debug( "Zero GT : "+ gdIndex + " " + gtIndex );
-						if( parentRA != null ) {
-							// look: read parent if exists,
-						}
 						System.arraycopy( zeroGrain, 0,
 										  ba, off+total, fromGrain );
 						total += fromGrain;
 						posn += fromGrain;
-						if( parentRA != null )
-							parentRA.skip( fromGrain );
 					} else if( gte == 1 ) {
 						System.arraycopy( zeroGrain, 0,
 										  ba, off+total, fromGrain );
 						total += fromGrain;
 						posn += fromGrain;
-						if( parentRA != null )
-							parentRA.skip( fromGrain );
 					} else {
 						if( gte != gtePrev ) {
 							raf.seek( gte * Constants.SECTORLENGTH );
@@ -338,8 +327,6 @@ public class StreamOptimizedSparseExtent {
 										  ba, off+total, fromGrain );
 						total += fromGrain;
 						posn += fromGrain;
-						if( parentRA != null )
-							parentRA.skip( fromGrain );
 					}
 				}
 				if( log.isDebugEnabled() )
@@ -393,7 +380,7 @@ public class StreamOptimizedSparseExtent {
 		}
 
 		private final RandomAccessFile raf;
-		private final RandomAccessVirtualDisk parentRA;
+		//		private final RandomAccessVirtualDisk parentRA;
 		private int gdIndex, gtIndex;
 		private long gOffset;
 		private long gtePrev;

@@ -13,20 +13,29 @@ public class StreamOptimizedSparseExtentTest extends junit.framework.TestCase {
 	protected void setUp() {
 	}
 
-	public void testPackerPlaypen() {
-		File dir = new File( "/home/stuart/playpen/packer/" );
+	public void testPackerPlaypen() throws Exception {
+		File dir = new File( "/home/stuart/playpen/packer/ovfs" );
 		if( !dir.isDirectory() )
 			return;
+		testRoot( dir );
+	}
+
+	public void testVagrantBoxes() throws Exception {
+		File dir = new File( "/lv1/vagrant.d/boxes/" );
+		if( !dir.isDirectory() )
+			return;
+		testRoot( dir );
+	}
+	
+	private void testRoot( File dir ) throws IOException {	
 		Collection<File> fs = FileUtils.listFiles
 			( dir, new String[] { "vmdk" }, true );
 		System.out.println( "Located: " + fs.size() );
 		for( File f : fs ) {
 			try {
 				testFooter( f );
-				testMarkers( f );
-				testReadMetaData( f );
-				if( true )
-					break;
+				//		testMarkers( f );
+				//				testReadMetaData( f );
 			} catch( Exception e ) {
 				e.printStackTrace();
 			}
@@ -39,9 +48,16 @@ public class StreamOptimizedSparseExtentTest extends junit.framework.TestCase {
 		System.out.println( "testMarkers " + f );
 		SparseExtentHeader seh = VMDKDisk.locateSparseExtentHeader( f );
 		System.out.println( seh.paramString() );
+		/*
+		  In a true streamoptimizedsparseextent, the gdOffset is 0 in the
+		  header, indicating that the footer should be used.
+		*/
+		if( seh.grainDirOffset() != 0 )
+			return;
 		StreamOptimizedSparseExtent sose = new StreamOptimizedSparseExtent
 			( f, seh );
-		List<StreamOptimizedSparseExtent.Marker> ms = sose.getAllMarkers();
+		/*
+		  List<StreamOptimizedSparseExtent.Marker> ms = sose.getAllMarkers();
 		System.out.println( "Markers: " + ms.size() );
 
 		List<StreamOptimizedSparseExtent.GrainMarker> gms = sose.getGrainMarkers();
@@ -50,6 +66,7 @@ public class StreamOptimizedSparseExtentTest extends junit.framework.TestCase {
 		List<StreamOptimizedSparseExtent.MetadataMarker> mdms =
 			sose.getMetadataMarkers();
 		System.out.println( "MetadataMarkers: " + mdms.size() );
+		*/
 	}
 
 	public void testFooter( File f ) throws Exception {
@@ -82,9 +99,9 @@ public class StreamOptimizedSparseExtentTest extends junit.framework.TestCase {
 		StreamOptimizedSparseExtent sose = new StreamOptimizedSparseExtent
 			( f, seh );
 		SparseExtentHeader sef = sose.locateSparseExtentFooter();
-		//System.out.println( "Footer: " + sef.paramString() );
+		System.out.println( "Footer: " + sef.paramString() );
 
-		sose.readGrainDirectory();
+		//		sose.readGrainDirectory();
 		//		System.out.println( sose.grainDirectory.paramString() );
 		
 		//sose.readGrainTables();

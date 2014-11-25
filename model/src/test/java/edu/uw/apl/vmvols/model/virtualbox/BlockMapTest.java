@@ -50,8 +50,8 @@ public class BlockMapTest extends junit.framework.TestCase {
 		System.out.println( "Type: " + vdi.imageType() );
 		System.out.println( "BlockSize: " + vdi.blockSize() );
 		//	System.out.println( "Generation: " + vdi.getGeneration() );
-		System.out.println( "Create: " + vdi.imageCreationUUID() );
-		System.out.println( "Parent: " + vdi.imageParentUUID() );
+		//		System.out.println( "Create: " + vdi.imageCreationUUID() );
+		//System.out.println( "Parent: " + vdi.imageParentUUID() );
 	}
 }
 

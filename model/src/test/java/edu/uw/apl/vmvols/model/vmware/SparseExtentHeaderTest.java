@@ -12,26 +12,21 @@ public class SparseExtentHeaderTest extends junit.framework.TestCase {
 	protected void setUp() {
 	}
 
-	public void testLocalData() {
+	public void _testLocalData() {
 		File dir = new File( "data" );
 		if( !dir.isDirectory() )
 			return;
-		Collection<File> fs = FileUtils.listFiles
-			( dir, new String[] { "vmdk" }, true );
-		System.out.println( "Located: " + fs.size() );
-		for( File f : fs ) {
-			try {
-				testSparseExtentHeader( f );
-			} catch( Exception e ) {
-				e.printStackTrace();
-			}
-		}
+		test( dir );
 	}
 
 	public void testPackerPlaypen() {
 		File dir = new File( "/home/stuart/playpen/packer" );
 		if( !dir.isDirectory() )
 			return;
+		test( dir );
+	}
+
+	private void test( File dir ) {
 		Collection<File> fs = FileUtils.listFiles
 			( dir, new String[] { "vmdk" }, true );
 		System.out.println( "Located: " + fs.size() );
