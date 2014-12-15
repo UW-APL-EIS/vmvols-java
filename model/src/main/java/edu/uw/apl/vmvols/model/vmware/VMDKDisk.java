@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.EndianUtils;
 import org.apache.commons.io.FileUtils;
@@ -18,8 +19,6 @@ import org.apache.log4j.Logger;
 
 import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.VirtualDisk;
-
-
 
 /**
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
@@ -53,8 +52,8 @@ abstract public class VMDKDisk extends VirtualDisk {
 	}
 
 	/**
-	   Any given .vmdk MAY start with a SparseExtentHeader...
-	*/
+	 *  Any given .vmdk MAY start with a SparseExtentHeader...
+	 */
 	static public SparseExtentHeader locateSparseExtentHeader( File f )
 		throws IOException {
 		RandomAccessFile raf = new RandomAccessFile( f, "r" );
@@ -94,55 +93,51 @@ abstract public class VMDKDisk extends VirtualDisk {
 		}
 	}
 	
-	static public VMDKDisk create( File f ) throws IOException {
+	static public VMDKDisk readFrom( File vmdkFile ) throws IOException {
 		VMDKDisk result = null;
 
 		Descriptor d = null;
 		try {
-			d = locateDescriptor( f );
+			d = locateDescriptor( vmdkFile );
 			if( d == null )
 				return null;
 		} catch( IllegalStateException ise ) {
 			return null;
 		}
-		String type = d.getCreateType().intern();
+		String type = d.getCreateType();
+		if( type == null )
+			return null;
+		type = type.intern();
 		if( false ) {
 		} else if( "monolithicSparse" == type ) {
-			SparseExtentHeader seh = locateSparseExtentHeader( f );
-			result = new MonolithicSparseDisk( f, seh, d );
+			SparseExtentHeader seh = locateSparseExtentHeader( vmdkFile );
+			result = new MonolithicSparseDisk( vmdkFile, seh, d );
 		} else if( "twoGbMaxExtentSparse" == type ) {
-			result = new SplitSparseDisk( f, d );
+			result = new SplitSparseDisk( vmdkFile, d );
+		} else if( "streamOptimized" == type ) {
+			SparseExtentHeader seh = locateSparseExtentHeader( vmdkFile );
+			result = new MonolithicStreamOptimizedDisk( vmdkFile, seh, d );
 		} else {
 			// to finish..
-			throw new IllegalStateException( "Disk type not supported: "
-											 + type );
+			throw new VMDKException( "Disk type not supported: " + type );
 		}
 		return result;
 	}
 
 	@Override
-	public int getGeneration() {
-		throw new IllegalStateException( "TODO" );
+	public UUID getUUID() {
+		return descriptor.uuidImage;
+	}
+
+	@Override
+	public UUID getUUIDParent() {
+		return descriptor.uuidParent;
 	}
 	
 	@Override
-	public VirtualDisk getGeneration( int i ) {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public VirtualDisk getActive() {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public List<? extends VirtualDisk> getAncestors() {
-		throw new IllegalStateException( "TODO" );
-	}
-
-	@Override
-	public String getID() {
-		return "getID()-TODO";
+ 	public String getID() {
+		VirtualDisk base = getBase();
+		return "VMDK-" + base.getUUID();
 	}
 	
 	/*
@@ -181,13 +176,14 @@ abstract public class VMDKDisk extends VirtualDisk {
 	//protected VMDKHeader header;
 	protected Descriptor descriptor;
 
-	protected VMDKDisk parent, child;
+	//protected VMDKDisk parent, child;
 	
+	static public final String FILESUFFIX = "vmdk";
 
-	static public final FilenameFilter FILENAMEFILTER =
+	static public final FilenameFilter FILEFILTER =
 		new FilenameFilter() {
 			public boolean accept( File dir, String name ) {
-				return name.endsWith( ".vmdk" );
+				return name.endsWith( FILESUFFIX );
 			}
 		};
 		

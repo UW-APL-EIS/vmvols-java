@@ -13,11 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 import org.apache.commons.io.EndianUtils;
-import org.apache.log4j.Logger;
 
 /**
    see also ./VDICore.h for reference and VBoxManage for the public api...
@@ -40,24 +40,13 @@ abstract public class VDIDisk extends VirtualDisk {
 	protected VDIDisk( File f, VDIHeader h ) {
 		super( f );
 		header = h;
-		log = Logger.getLogger( getClass() );
 	}
 
-	public void setChild( DifferenceDisk dd ) {
-		child = dd;
-		dd.setParent( this );
-	}
-
-	// may be null, ok.  Assume caller knows this...
-	public DifferenceDisk getChild() {
-		return child;
+	public VDIHeader getHeader() {
+		return header;
 	}
 	
-	public VDIDisk getBase() {
-		return (VDIDisk)getGeneration(0);
-	}
-
-	static public VDIDisk create( File hostVDIFile ) throws IOException {
+	static public VDIDisk readFrom( File hostVDIFile ) throws IOException {
 		VDIHeader h = VDIHeaders.parse( hostVDIFile );
 		VDIDisk result = null;
 		switch( (int)h.imageType() ) {
@@ -71,8 +60,7 @@ abstract public class VDIDisk extends VirtualDisk {
 			result = new DifferenceDisk( hostVDIFile, h );
 			break;
 		default:
-			throw new IllegalStateException
-				( "Image type not supported: " + h.imageType() );
+			throw new VDIException( "Image type not supported: " + h.imageType() );
 		}
 		return result;
 	}
@@ -95,8 +83,8 @@ abstract public class VDIDisk extends VirtualDisk {
 
 	@Override
 	public String getID() {
-		VDIDisk base = getBase();
-		return "VBox-" + base.header.imageCreationUUID();
+		VirtualDisk base = getBase();
+		return "VDI-" + base.getUUID();
 	}
 	
 	@Override
@@ -110,13 +98,16 @@ abstract public class VDIDisk extends VirtualDisk {
 		return null;//		return getBase().getPath();
 	}
 
-	public String imageParentUUID() {
-		return header.imageParentUUID();
-	}
-	
-	public String imageCreationUUID() {
+	@Override
+	public UUID getUUID() {
 		return header.imageCreationUUID();
 	}
+
+	@Override
+	public UUID getUUIDParent() {
+		return header.imageParentUUID();
+	}
+
 	
 	public int imageType() {
 		return (int)header.imageType();
@@ -175,6 +166,7 @@ abstract public class VDIDisk extends VirtualDisk {
 			// 2: duplicate bme..
 			boolean isUnique = s.add( bme );
 			if( !isUnique ) {
+				System.err.println( s );
 				throw new VDIException
 					( "BlockMapEntry duplicate: " + bme +
 					  ". Corrupt vdi? " + getPath() );
@@ -234,16 +226,16 @@ abstract public class VDIDisk extends VirtualDisk {
 
 	protected int[] blockMap;
 
-	protected final Logger log;
 	protected final VDIHeader header;
 	
 	// child may be null
-	protected DifferenceDisk child;
+	//	protected DifferenceDisk child;
 	
+	static public final String FILESUFFIX = "vdi";
 
-	static public final FilenameFilter FILENAMEFILTER = new FilenameFilter() {
+	static public final FilenameFilter FILEFILTER = new FilenameFilter() {
 			public boolean accept( File dir, String name ) {
-				return name.endsWith( ".vdi" );
+				return name.endsWith( FILESUFFIX );
 			}
 		};
 

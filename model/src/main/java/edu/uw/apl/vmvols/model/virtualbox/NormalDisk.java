@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
-import edu.uw.apl.vmvols.model.AbstractRandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 /**
@@ -43,89 +42,39 @@ public class NormalDisk extends DynamicDisk {
 		}
 	}
 
-
-	@Override
-	public int getGeneration() {
-		return 0;
-	}
-
-	@Override
-	public VirtualDisk getGeneration( int i ) {
-		if( i == 0 )
-			return this;
-		if( child != null )
-			return child.getGeneration( i );
-		throw new IllegalStateException( "NormalDisk.getGeneration query " + i);
-	}
-
-	@Override
-	public VirtualDisk getActive() {
-		if( child == null )
-			return this;
-		return child.getActive();
-	}
-
-	@Override
-	public List<VirtualDisk> getAncestors() {
-		return Collections.emptyList();
-	}
-	
 	@Override
 	public InputStream getInputStream() throws IOException {
 		readBlockMap();
-		return new NormalDiskInputStream();
+		return new NormalDiskRandomAccess( false );
 	}
 	
 	@Override
-	public RandomAccessVolume getRandomAccessVolume() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
 		readBlockMap();
-		return new NormalDiskRandomAccessVolume();
+		return new NormalDiskRandomAccess( true );
 	}
 
-	class NormalDiskInputStream extends InputStream {
-		NormalDiskInputStream()
-			throws IOException {
-			raf = new RandomAccessFile( source, "r" );
-			origin = 0;
-			size = size();
-			posn = 0;
+	class NormalDiskRandomAccess extends RandomAccessVirtualDisk {
+		NormalDiskRandomAccess( boolean writable ) throws IOException {
+			super( size() );
+			String mode = writable ? "rw" : "r";
+			raf = new RandomAccessFile( source, mode );
 			dPos();
 
 			block = new byte[(int)header.blockSize()];
 			bmePrev = -1;
 		}
-		
-	    @Override
-	    public int available() throws IOException {
-			long l = size - posn;
-			if( l >= Integer.MAX_VALUE )
-				return Integer.MAX_VALUE;
-			return (int)l;
-	    }
 
 		@Override
 	    public long skip( long n ) throws IOException {
-			if( n < 0 )
-				return 0;
-			long min = Math.min( n, size-posn );
-			posn += min;
+			long result = super.skip( n );
 			dPos();
-			return min;
-	    }
+			return result;
+		}
 
 		@Override
 		public void close() throws IOException {
 			raf.close();
-		}
-
-		@Override
-		public int read() throws IOException {
-			if( posn >= size )
-				return -1;
-			byte[] ba = new byte[1];
-			// given that checked eof above, the read must return one byte
-			int n = read( ba, 0, 1 );
-			return ba[0] & 0xff;
 		}
 
 		/**
@@ -144,25 +93,15 @@ public class NormalDisk extends DynamicDisk {
 		*/
 		   
 		@Override
-		public int read( byte[] ba, int off, int len ) throws IOException {
-
-			// checks from the contract for InputStream...
-			if( ba == null )
-				throw new NullPointerException();
-			if( off < 0 || len < 0 || off + len > ba.length ) {
-				logger.warn( ba.length + " " + off + " "+ len );
-				throw new IndexOutOfBoundsException();
-			}
-			if( len == 0 )
-				return 0;
+		public int readImpl( byte[] ba, int off, int len ) throws IOException {
 			
-			if( posn >= size ) {
-				return -1;
-			}
-			
-			// do min in long space, since size - posn may overflow int...
+			// Do min in long space, since size - posn may overflow int...
 			long actualL = Math.min( size - posn, len );
-			int actual = (int)actualL;
+
+			// Cannot blindly coerce a long to int, result could be -ve
+			int actual = actualL > Integer.MAX_VALUE ? Integer.MAX_VALUE :
+				(int)actualL;
+
 			//logger.debug( "Actual " + actualL + " " + actual );
 			int total = 0;
 			while( total < actual ) {
@@ -184,9 +123,9 @@ public class NormalDisk extends DynamicDisk {
 					break;
 				default:
 					/*
-					  physical file location is sector lookup from
-					  current blockMapEntry, plus our offset into
-					  that block..
+					  Physical file location is sector lookup from
+					  current blockMapEntry, plus our offset into that
+					  block..
 					*/
 					// need long operands to the product, to avoid overflow...
 					if( bme != bmePrev ) {
@@ -209,229 +148,29 @@ public class NormalDisk extends DynamicDisk {
 			return total;
 		}
 
-		/**
-		   Called whenever the local posn changes value.
-		*/
-		private void dPos() {
-
-			/*
-			  This is the crux of the sparse reading. We map logically
-			  map the 'file pointer' on the input stream to a block
-			  map and block offset.  To do the next read, we then calc
-			  a physical seek offset into the atual file and read.
-
-			  According to java.io.RandomAccessFile, a file posn
-			  is permitted to be past its size limit.  We cannot
-			  map such a posn to the block map info of course...
-			*/
-			if( posn >= size )
-				return;
-
-			long imageOffset = origin + posn;
-			bIndex = (int)(imageOffset / header.blockSize());
-			bOffset = (int)(imageOffset % header.blockSize());
-
-			if( log.isDebugEnabled() )
-				log.debug( getGeneration() + " posn: "+ posn +
-						   " bIndex: " + bIndex +
-						   " bOffset: " + bOffset );
-		}
-
-	
-		private final RandomAccessFile raf;
-		private final long origin, size;
-		private long posn;
-		private int bIndex, bOffset;
-		private final byte[] block;
-		private int bmePrev;
-	}
-
-	class NormalDiskRandomAccessVolume extends AbstractRandomAccessVolume {
-		NormalDiskRandomAccessVolume() throws IOException {
-			raf = new RandomAccessFile( source, "rw" );
-			origin = 0;
-			size = size();
-			posn = 0;
-			dPos();
-		}
-
-		@Override
-		public void close() throws IOException {
-			raf.close();
-		}
-
-		@Override
-		public long length() throws IOException {
-			return size;
-		}
-
 		@Override
 		public void seek( long s ) throws IOException {
-			log.debug( getGeneration() + ".seek "+ s );
-			// according to java.io.RandomAccessFile, no restriction on seek
+			/*
+			  According to java.io.RandomAccessFile, no restriction on
+			  seek.  That is, seek posn can be -ve or past eof
+			*/
 			posn = s;
 			dPos();
 		}
 
-		public int readXXX() throws IOException {
-			if( posn >= size )
-				return -1;
-			
-			int result;
-			// block map entry...
-			int bme = blockMap[bIndex];
-			switch( bme ) {
-			case VDI_IMAGE_BLOCK_FREE:
-				result = RANDOM;
-				break;
-			case VDI_IMAGE_BLOCK_ZERO:
-				result = 0;
-				break;
-			default: {
-				// need long operands to the product, to avoid overflow...
-				long seek = header.dataOffset() +
-					bme * header.blockSize() + bOffset;
-				raf.seek( seek );
-				result = raf.read();
-			}
-				break;
-			}
-			posn += 1;
-			dPos();
-			return result;
-		}
-
-		/**
-		   For the array read, we shall attempt to satisy the length
-		   requested, even if it is takes us many reads (of the
-		   physical file) from different blocks to do so.  While the
-		   contract for InputStream is that any read CAN return < len
-		   bytes, for InputStreams backed by file data, users probably
-		   expect len bytes back (fewer of course if eof).
-
-		   Further, when using this class with our
-		   VirtualDiskFS/Fuse4j/fuse system to expose the vdi to
-		   fuse, fuse states that the callback read operation is
-		   REQUIRED to return len bytes if they are available
-		   (i.e. not read past eof)
-		*/
-		   
 		@Override
-		public int read( byte[] ba, int off, int len ) throws IOException {
-
-			// checks from the contract for InputStream...
-			if( ba == null )
-				throw new NullPointerException();
-			if( off < 0 || len < 0 || off + len > ba.length ) {
-				logger.warn( "IOOBE: " + ba.length + " " + off + " "+ len );
-				throw new IndexOutOfBoundsException();
-			}
-			if( len == 0 )
-				return 0;
-			
-			if( posn >= size ) {
-				return -1;
-			}
-			
-			// do min in long space, since size - posn may overflow int...
-			long actualL = Math.min( size - posn, len );
-			int actual = (int)actualL;
-			//logger.debug( "Actual " + actualL + " " + actual );
-			int total = 0;
-			while( total < actual ) {
-				int left = actual - total;
-				int inBlock = (int)(header.blockSize() - bOffset);
-				int n = Math.min( left, inBlock );
-				//logger.debug( "inBlock left n " + inBlock + " " + left + " "+n);
-				int bme = blockMap[bIndex];
-				logger.debug( "bme " + bme );
-				int nin;
-				switch( bme ) {
-				case VDI_IMAGE_BLOCK_FREE:
-					// have a random block pre-allocated, fill from it...
-					System.arraycopy( randomBlock, 0, ba, off+total, n );
-					nin = n;
-					break;
-				case VDI_IMAGE_BLOCK_ZERO: 
-					// have a zero block pre-allocated, fill from it...
-					System.arraycopy( zeroBlock, 0, ba, off+total, n );
-					nin = n;
-					break;
-				default:
-					/*
-					  physical file location is sector lookup from
-					  current blockMapEntry, plus our offset into
-					  that block..
-					*/
-					// need long operands to the product, to avoid overflow...
-					long seek = header.dataOffset() +
-						bme * header.blockSize() + bOffset;
-					logger.debug( "seek " + seek );
-					raf.seek( seek );
-					nin = raf.read( ba, off+total, n );
-					if( log.isDebugEnabled() ) {
-						log.debug( getGeneration() + ".read " + posn  +
-								   " = " + nin );
-					}
-				}
-				total += nin;
-				posn += nin;
-				dPos();
-			}
-			return total;
-		}
-
-		@Override
-		public void write( int b ) throws IOException {
-			if( posn >= size )
-				return;
-			
-			// block map entry...
-			int bme = blockMap[bIndex];
-			if( bme == VDI_IMAGE_BLOCK_FREE ||
-				bme == VDI_IMAGE_BLOCK_ZERO ) {
-				bme = nextFreeBlock();
-				blockMap[bIndex] = bme;
-				writeBlockMap();
-			}
-			
-			// need long operands to the product, to avoid overflow...
-			long seek = header.dataOffset() +
-				bme * header.blockSize() + bOffset;
-			raf.seek( seek );
-			raf.write( b );
-			posn += 1;
-			dPos();
-		}
-
-		/**
-		   For the array write, we shall attempt to satify the length
-		   requested, even if it is takes us many writes (of the
-		   physical file) from different blocks to do so.
-		*/
-		   
-		@Override
-		public void write( byte[] ba, int off, int len ) throws IOException {
+		public void writeImpl( byte[] ba, int off, int len )
+			throws IOException {
 
 			log.debug( "Write.[BII: " + off + " " + len );
-
-			// checks from the contract for RandomAccessFile...
-			if( ba == null )
-				throw new NullPointerException();
-			if( off < 0 || len < 0 || off + len > ba.length ) {
-				logger.warn( ba.length + " " + off + " "+ len );
-				throw new IndexOutOfBoundsException();
-			}
-			if( len == 0 )
-				return;
 			
-			if( posn >= size ) {
-				return;
-			}
-			
-			// do min in long space, since size - posn may overflow int...
+			// Do min in long space, since size - posn may overflow int...
 			long actualL = Math.min( size - posn, len );
-			int actual = (int)actualL;
+
+			// Cannot blindly coerce a long to int, result could be -ve
+			int actual = actualL > Integer.MAX_VALUE ? Integer.MAX_VALUE :
+				(int)actualL;
+
 			//logger.debug( "Actual " + actualL + " " + actual );
 			int total = 0;
 			while( total < actual ) {
@@ -465,13 +204,18 @@ public class NormalDisk extends DynamicDisk {
 				dPos();
 			}
 		}
-
 		
 		/**
-		   Called whenever the local posn changes value.
-		*/
+		 * Called whenever the local posn changes value.
+		 */
 		private void dPos() {
+
 			/*
+			  This is the crux of the sparse reading. We map logically
+			  map the 'file pointer' on the input stream to a block
+			  map and block offset.  To do the next read, we then calc
+			  a physical seek offset into the atual file and read.
+
 			  According to java.io.RandomAccessFile, a file posn
 			  is permitted to be past its size limit.  We cannot
 			  map such a posn to the block map info of course...
@@ -479,20 +223,21 @@ public class NormalDisk extends DynamicDisk {
 			if( posn >= size )
 				return;
 
-			long imageOffset = origin + posn;
+			long imageOffset = posn;
 			bIndex = (int)(imageOffset / header.blockSize());
 			bOffset = (int)(imageOffset % header.blockSize());
 
 			if( log.isDebugEnabled() )
-				log.debug( getGeneration() + ".posn: "+ posn +
+				log.debug( getGeneration() + " posn: "+ posn +
 						   " bIndex: " + bIndex +
 						   " bOffset: " + bOffset );
 		}
 
+	
 		private final RandomAccessFile raf;
-		private final long origin, size;
-		private long posn;
 		private int bIndex, bOffset;
+		private final byte[] block;
+		private int bmePrev;
 	}
 	
 

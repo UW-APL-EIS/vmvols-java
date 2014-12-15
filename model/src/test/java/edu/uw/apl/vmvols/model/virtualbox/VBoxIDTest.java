@@ -39,17 +39,19 @@ public class VBoxIDTest extends junit.framework.TestCase {
 		for( VirtualDisk vd : vm.getActiveDisks() ) {
 			VDIDisk vdi = (VDIDisk)vd;
 			report( vdi );
-			for( VirtualDisk an : vdi.getAncestors() ) {
+			/*
+			  for( VirtualDisk an : vdi.getAncestors() ) {
 				VDIDisk vdian = (VDIDisk)an;
 				report( vdian );
 			}
+			*/
 		}
 	}
 
 	void report( VDIDisk vdi ) {
 		System.out.println( "Generation: " + vdi.getGeneration() );
-		System.out.println( "Create: " + vdi.imageCreationUUID() );
-		System.out.println( "Parent: " + vdi.imageParentUUID() );
+		//		System.out.println( "Create: " + vdi.imageCreationUUID() );
+		//System.out.println( "Parent: " + vdi.imageParentUUID() );
 		String id = vdi.getID();
 		System.out.println( "id " + id );
 	}

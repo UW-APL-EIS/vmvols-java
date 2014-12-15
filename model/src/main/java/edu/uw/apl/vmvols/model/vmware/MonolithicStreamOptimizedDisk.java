@@ -18,21 +18,22 @@ import org.apache.commons.io.EndianUtils;
 import org.apache.log4j.Logger;
 
 import edu.uw.apl.vmvols.model.Constants;
-import edu.uw.apl.vmvols.model.RandomAccessVolume;
+import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
  */
 
 public class MonolithicStreamOptimizedDisk extends VMDKDisk {
 
-	MonolithicStreamOptimizedDisk( File f, SparseExtentHeader seh, Descriptor d ) {
+	MonolithicStreamOptimizedDisk( File f, SparseExtentHeader seh,
+								   Descriptor d ) {
 		super( f, d );
 		extent = new StreamOptimizedSparseExtent( f, seh );
 	}
 
 	@Override
 	public long size() {
-		return 0L;//extent.size();
+		return extent.size();
 	}
 
 	@Override
@@ -42,12 +43,12 @@ public class MonolithicStreamOptimizedDisk extends VMDKDisk {
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return null;//extent.getInputStream();
+		return extent.getInputStream();
 	}
 
 	@Override
-	public RandomAccessVolume getRandomAccessVolume() throws IOException {
-		return null;//extent.getRandomAccessVolume();
+	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+		return extent.getRandomAccess();
 	}
 
 	private final StreamOptimizedSparseExtent extent;

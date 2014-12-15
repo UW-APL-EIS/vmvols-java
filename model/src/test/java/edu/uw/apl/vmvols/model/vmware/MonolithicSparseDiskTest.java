@@ -15,7 +15,7 @@ public class MonolithicSparseDiskTest extends junit.framework.TestCase {
 		File f = new File( "data/vmdk/CaineTester.vmdk" );
 		if( !f.exists() )
 			return;
-		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.create(f);
+		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.readFrom(f);
 		InputStream is = msd.getInputStream();
 		int bs = (int)msd.contiguousStorage();
 		String md5 = Utils.md5sum( is, bs );
@@ -27,7 +27,7 @@ public class MonolithicSparseDiskTest extends junit.framework.TestCase {
 		if( !f.exists() )
 			return;
 		System.out.println( f );
-		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.create(f);
+		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.readFrom(f);
 		InputStream is = msd.getInputStream();
 		int bs = (int)msd.contiguousStorage();
 		String md5 = Utils.md5sum( is, bs );
@@ -40,7 +40,7 @@ public class MonolithicSparseDiskTest extends junit.framework.TestCase {
 		if( !f.exists() )
 			return;
 		System.out.println( f );
-		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.create(f);
+		MonolithicSparseDisk msd = (MonolithicSparseDisk)VMDKDisk.readFrom(f);
 	}
 }
 
