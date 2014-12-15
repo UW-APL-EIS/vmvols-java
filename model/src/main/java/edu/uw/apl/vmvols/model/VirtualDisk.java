@@ -3,6 +3,7 @@ package edu.uw.apl.vmvols.model;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,9 +76,34 @@ abstract public class VirtualDisk {
 		return child.getActive();
 	}
 
-	//	abstract public VirtualDisk getGeneration( int i );
+	public VirtualDisk getGeneration( int i ) {
+		int g = getGeneration();
+		if( g == i )
+			return this;
+		if( i < g ) {
+			if( parent == null )
+				throw new IllegalArgumentException
+					( source + ": No generation " + i );
+			return parent.getGeneration( i );
+		}
+		if( child == null )
+				throw new IllegalArgumentException
+					( source + ": No generation " + i );
+		return child.getGeneration( i );
+	}
+	
+	public List<VirtualDisk> getAncestors() {
+		List<VirtualDisk> result = new ArrayList<VirtualDisk>();
+		getAncestors( result );
+		return result;
+	}
 
-	//	abstract public List<VirtualDisk> getAncestors();
+	private void getAncestors( List<VirtualDisk> accumulator ) {
+		if( parent == null )
+			return;
+		accumulator.add( parent );
+		parent.getAncestors( accumulator );
+	}
 
 	protected final File source;
 	protected VirtualDisk parent, child;

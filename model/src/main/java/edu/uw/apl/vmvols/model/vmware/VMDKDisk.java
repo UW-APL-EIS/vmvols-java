@@ -104,7 +104,10 @@ abstract public class VMDKDisk extends VirtualDisk {
 		} catch( IllegalStateException ise ) {
 			return null;
 		}
-		String type = d.getCreateType().intern();
+		String type = d.getCreateType();
+		if( type == null )
+			return null;
+		type = type.intern();
 		if( false ) {
 		} else if( "monolithicSparse" == type ) {
 			SparseExtentHeader seh = locateSparseExtentHeader( vmdkFile );
@@ -116,8 +119,7 @@ abstract public class VMDKDisk extends VirtualDisk {
 			result = new MonolithicStreamOptimizedDisk( vmdkFile, seh, d );
 		} else {
 			// to finish..
-			throw new IllegalStateException( "Disk type not supported: "
-											 + type );
+			throw new VMDKException( "Disk type not supported: " + type );
 		}
 		return result;
 	}

@@ -42,16 +42,10 @@ abstract public class VDIDisk extends VirtualDisk {
 		header = h;
 	}
 
-	public void setChild( DifferenceDisk dd ) {
-		child = dd;
-		dd.setParent( this );
-	}
-
 	public VDIHeader getHeader() {
 		return header;
 	}
 	
-
 	static public VDIDisk readFrom( File hostVDIFile ) throws IOException {
 		VDIHeader h = VDIHeaders.parse( hostVDIFile );
 		VDIDisk result = null;
@@ -66,8 +60,7 @@ abstract public class VDIDisk extends VirtualDisk {
 			result = new DifferenceDisk( hostVDIFile, h );
 			break;
 		default:
-			throw new IllegalStateException
-				( "Image type not supported: " + h.imageType() );
+			throw new VDIException( "Image type not supported: " + h.imageType() );
 		}
 		return result;
 	}
