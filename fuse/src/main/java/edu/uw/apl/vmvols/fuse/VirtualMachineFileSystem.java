@@ -28,43 +28,77 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
    fuse.Filesystem3) where the 'filesystem' is simply a list of
    VirtualDisks (currently we have implemented virtualbox.vdi and
    vmware.vmdk formats) under a single directory.  So a directory
-   listing presents a list of what looks like devices (.vdi files) and
-   partitions within those devices (.vdi:N files)
+   listing presents a list of what looks like devices (.vdi files)
    
    All we really care about is getattr,open,read.  We have stub/noops
    for the other parts of the fuse api.
 
-   To actually make such an fs visible at the OS-level, we do:
+   To actually make such an fs visible at the host OS-level, we do:
 
    VirtualMachineFS fs = new VirtualMachineFS();
-   fs.add( some VMs );
-   String[] args = { "mountpoint", "-f" };
-   Log log = LogFactory.getLog( My.class );
-   FuseMount.mount(args, fs, log );
+
+   fs.add( vmDir1 );
+   fs.add( vmDir2 );
+
+   File mountPoint = new File( "mount" );
+   mountPoint.mkdirs();
+
+   boolean ownThread = true|false;
+
+   fs.mount( mountPoint, ownThread );
+
+   We can later either unmount the mount point externally, e.g.
+
+   $ fusermount -u mount
+
+   or from within code (assuming ownThread set to true)
+
+   fs.umount()
+
+   The umount() method call simply invokes fusermount anyway.
 
    By making virtual disks (e.g. VirtualBox .vdi) visible to fuse, we
    make the underlying .dd bit streams inside the virtual disks
    available at the file system level, and thus visible to
    e.g. Sleuthkit.
 
-   Further, we have added the capability to see snapshot disks too.  The
-   paths under the file system root are as follows:
+   Further, we have added the capability to see snapshot disks too.
+   The paths under the file system root are as follows.  The list of
+   vms added to the VMFS become the first level directories under the
+   mount point, e.g.
 
    /vm1name
    /vm2name
 
-   /vmname/0/ -- shows all disks and partitions with generation 0
+   Under each vm directory are listed all the disks for that vm, named
+   sda for the first disk found, sdb for the second disk, etc:
+   
+   /vm1name/sda 
+   /vm1name/sdb 
+   /vm2name/sda
 
-   /vmname/sda 
-   /vmname/sda1 
-   /vmname/sdb 
-   /vmname/sdb1 -- shows all ACTIVE disks and partitions, so generation omitted
+   These names correspond to the 'active' disk contents, i.e.  the one
+   that would be read/written were the vm to be powered on.
+   
+   If snapshots are enabled (a simple boolean), then every generation
+   of every disk appears too.  Generation 0 is the disk from
+   creation up to any first snapshot, generation 1 is up to any second
+   snapshot, etc.  The highest generation corresponds to the 'active'
+   disk,
 
-   Normally you would want to access the 'active' disk, i.e. the one
-   that the VM engine uses for disk reads/writes, so for that one, we
-   omit the generation in the path, so you use the expected
-   /vmname/sda, just like you would use /dev/sda
+   /vm1name/sda 
+   /vm1name/sda0 
+   /vm1name/sda1
+   /vm1name/sdb 
+   /vm1name/sdb0
 
+   In the example above, vm1name/sda and vm1name/sda1 have same
+   content (since disk sda1 is the active disk).  sda0 would contain
+   the disk content frozen by the snapshot.  Similarly for vm1name/sdb
+   and vm2name/sdb0.  Disk sdb would have been added AFTER the sole
+   snapshot was taken, explaining why the generation sequencing of
+   disk a is distinct from that of disk b. Disk a has two distinct
+   contents, disk b has just one.
 */
    
 public class VirtualMachineFileSystem extends AbstractFilesystem3 {
@@ -93,13 +127,21 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 		for( int i = 0; i < ads.size(); i++ ) {
 			char diskNum = (char)('a' + i);
 			VirtualDisk vd = ads.get(i);
+			// vmName/sdN for all disks N
 			String extName = vm.getName() + "/sd" + ("" + diskNum);
 			volumesByPath.put( extName, vd );
+			log.debug( "VMFS.put: " + extName + " -> " + vd );
 			if( includeSnapshots ) {
+				// /vmName/sdNG for all disks N and generations G of that disk
+				extName = vm.getName() + "/sd" + ("" + diskNum) +
+					( "" + vd.getGeneration() );
+				volumesByPath.put( extName, vd );
+				log.debug( "VMFS.put: " + extName + " -> " + vd );
 				for( VirtualDisk an : vd.getAncestors() ) {
 					int g = an.getGeneration();
-					extName = vm.getName() + "/" + g + "/sd" + ("" + diskNum);
+					extName = vm.getName() + "/sd" + ("" + diskNum) + ("" + g);
 					volumesByPath.put( extName, an );
+					log.debug( "VMFS.put: " + extName + " -> " + an );
 				}
 			}
 		}
@@ -113,10 +155,10 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 	 * The reverse lookup of volumesByPath, when the Volume handle is known
 	 * and we want the path.  Used by e.g. Elvis for external commands
 	 */
-	public String getPath( VirtualDisk vd ) {
+	public File pathTo( VirtualDisk vd ) {
 		for( Map.Entry<String,VirtualDisk> me : volumesByPath.entrySet() ) {
 			if( me.getValue() == vd )
-				return me.getKey();
+				return new File( mountPoint, me.getKey() );
 		}
 		throw new IllegalArgumentException( "Unknown volume: " + vd );
 	}
@@ -163,8 +205,9 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 				 time, time, time);
 			return 0;
 		}
-
 		String details = path.substring(1);
+
+		// Path identifies just a vm by name, e.g. /someVMName
 		Matcher m1 = NAMEP.matcher( details );
 		if( m1.matches() ) {
 			if( log.isDebugEnabled() )
@@ -173,7 +216,7 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			if( !vms.containsKey( vmName ) )
 				return Errno.ENOENT;
 			VirtualMachine vm = vms.get( vmName );
-			List<? extends VirtualDisk> vds = vm.getActiveDisks();
+			List<VirtualDisk> vds = vm.getActiveDisks();
 			int time = startTime;
 			getattrSetter.set
 				(vmName.hashCode(), FuseFtypeConstants.TYPE_DIR | 0755, 2,
@@ -184,41 +227,15 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			return 0;
 		}
 
-		Matcher m2 = NAMEGENP.matcher( details );
-		if( m2.matches() && includeSnapshots ) {
+		/*
+		  Path identifies an active disk, e.g. /someVMName/sda
+		  or a generation-identified disk, e.g. /someVMName/sda1
+		*/
+		Matcher m2 = ACTIVEDISKP.matcher( details );
+		Matcher m3 = DISKGENP.matcher( details );
+		if( m2.matches() || m3.matches() ) {
 			if( log.isDebugEnabled() )
-				log.debug( "Is vmname+gen: " + details );
-			String vmName = m2.group(1);
-			int g = Integer.parseInt( m2.group(2) );
-			if( !vms.containsKey( vmName ) )
-				return Errno.ENOENT;
-			VirtualMachine vm = vms.get( vmName );
-			List<VirtualDisk> vds = vm.getBaseDisks();
-			int n = 0;
-			for( VirtualDisk vd : vds ) {
-				try {
-					VirtualDisk tmp = vd.getGeneration( g );
-					n++;
-				} catch( IllegalStateException ise ) {
-					continue;
-				}
-			}
-			if( n == 0 )
-				return Errno.ENOENT;
-			int time = startTime;
-			getattrSetter.set
-				(vmName.hashCode(), FuseFtypeConstants.TYPE_DIR | 0755, 2,
-				 0, 0, 0,
-				 // size, blocks lifted from example FakeFilesystem...
-				 n * 128, (n * 128 + 512 - 1) / 512, time, time, time);
-			return 0;
-		}
-		
-		Matcher m3 = DISKP.matcher( details );
-		Matcher m4 = ACTIVEDISKP.matcher( details );
-		if( m3.matches() || m4.matches() ) {
-			if( log.isDebugEnabled() )
-				log.debug( "Matches disk: " + details );
+				log.debug( "Is disk: " + details );
 			VirtualDisk vd = volumesByPath.get( details );
 			if( vd == null )
 				return Errno.ENOENT;
@@ -250,54 +267,12 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			}
 			return 0;
 		}
-
 		String details = path.substring(1);
+
+		// Path identifies just a vm by name, e.g. /someVMName
 		Matcher m1 = NAMEP.matcher( details );
 		if( m1.matches() ) {
 			String needle = m1.group(0);
-			Set<String> matchingFiles = new HashSet<String>();
-			Set<String> matchingDirs = new HashSet<String>();
-			for( String s : volumesByPath.keySet() ) {
-				if( s.startsWith( needle ) ) {
-					/*
-					  If the input is /name, the matching volumes can be
-
-					  /sda
-					  /sda1
-					  /N0/sda
-					  /N0/sda1
-					  /N1/sda
-					  /N1/sda1
-					  
-					  for some generations Ni.  In these cases, the output
-					  must be a directory named /N and not /N/sda*.  If
-					  no generation in the suffix, output is a file
-					*/
-					String suffix = s.substring( needle.length() + 1 );
-					int sep = suffix.indexOf( "/" );
-					if( sep > -1 ) {
-						suffix = suffix.substring( 0, sep );
-						matchingDirs.add( suffix );
-					} else {
-						matchingFiles.add( suffix );
-					}
-				}
-			}
-			if( matchingFiles.isEmpty() && matchingDirs.isEmpty() )
-				return Errno.ENOENT;
-			for( String s : matchingDirs )
-				filler.add( s, s.hashCode(),
-							FuseFtypeConstants.TYPE_DIR| 0755 );
-			for( String s : matchingFiles ) {
-				filler.add( s, s.hashCode(),
-							FuseFtypeConstants.TYPE_FILE| 0644 );
-			}
-			return 0;
-		}
-		
-		Matcher m2 = NAMEGENP.matcher( details );
-		if( m2.matches() && includeSnapshots ) {
-			String needle = m2.group(0);
 			Set<String> matching = new HashSet<String>();
 			for( String s : volumesByPath.keySet() ) {
 				if( s.startsWith( needle ) ) {
@@ -307,13 +282,14 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			}
 			if( matching.isEmpty() )
 				return Errno.ENOENT;
+			// LOOK: Only an active disk could be writable !!
+			int mode = readOnly ? 0444 : 0644;
 			for( String s : matching ) {
 				filler.add( s, s.hashCode(),
-							FuseFtypeConstants.TYPE_FILE| 0644 );
+							FuseFtypeConstants.TYPE_FILE | mode );
 			}
 			return 0;
 		}
-		
 
 		return Errno.ENOENT;
 	}
@@ -510,24 +486,37 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 	// LOOK: really ANY char that is not '/' is valid in a vm name
 	static final String NAMERE = "([\\p{Alnum}_\\-\\.]+)";
 	
-	static final String GENRE = "(\\d+)";
-	static final String DISKRE = "(sd[a-z])";
+	static final String DISKRE = "sd([a-z])";
 
+	static final String GENRE = "(\\d+)";
+
+	/**
+	   Recall that there is an arbitrary sequence of operations
+	   regarding taking vm snapshots and adding disks to a vm.  When
+	   we 'snapshot' a VM, it freezes ALL existing disks.  But were we
+	   to do this:
+
+	   create vm, with single disk, call it disk 1
+	   snapshot1, freezes disk 1
+	   add disk 2
+	   snapshot2, freezes both disk 1, disk 2
+
+	   then after snapshot2, disk 1 has 3 different states, while disk
+	   2 has only 2 different states.  So generation identification
+	   has to be on a per-disk level, not on a vm level.
+	*/
+	
 	// a vmName e.g. /winxp1
 	static final Pattern NAMEP =
 		Pattern.compile( "^" + NAMERE + "$" );
 
-	// a vmName plus disk generation e.g. /winxp1/0
-	static final Pattern NAMEGENP =
-		Pattern.compile( "^" + NAMERE + "/" + GENRE + "$" );
-	
-	// a disk with generation within a vm, e.g. /winxp1/0/sda.
-	static final Pattern DISKP =
-		Pattern.compile( "^" + NAMERE + "/" + GENRE + "/" + DISKRE + "$" );
-
-	// an active disk within a vm, e.g. /winxp1/sda.  Note no generation
+	// an active disk within a vm, e.g. /winxp1/sda.  Note no generation info
 	static final Pattern ACTIVEDISKP =
 		Pattern.compile( "^" + NAMERE + "/" + DISKRE + "$" );
+
+	// an generation-identified disk within a vm, e.g. /winxp1/sda1
+	static final Pattern DISKGENP =
+		Pattern.compile( "^" + NAMERE + "/" + DISKRE + GENRE + "$" );
 }
 
 // eof

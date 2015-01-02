@@ -10,7 +10,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import org.apache.commons.io.EndianUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.VirtualDisk;
@@ -27,7 +28,7 @@ public class SparseExtentHeader {
 	 */
 	public SparseExtentHeader( byte[] ba ) throws IOException {
 
-		logger = Logger.getLogger( getClass() );
+		log = LogFactory.getLog( getClass() );
 		
 		// uint32...
 		long magic = EndianUtils.readSwappedUnsignedInteger( ba, 0 );
@@ -65,7 +66,7 @@ public class SparseExtentHeader {
 
 		// uint32...
 		numGTEsPerGT = EndianUtils.readSwappedUnsignedInteger( ba, 44);
-		logger.debug( "GTEsPerGT " + numGTEsPerGT );
+		log.debug( "GTEsPerGT " + numGTEsPerGT );
 
 		// SectorType...
 		rgdOffset = EndianUtils.readSwappedLong( ba, 48 );
@@ -142,7 +143,7 @@ public class SparseExtentHeader {
 	final long descriptorOffset, descriptorSize;
 	final int compressAlgorithm;
 	
-	private Logger logger;
+	private Log log;
 	
 	// #define SPARSE_MAGICNUMBER 0x564d444b /* 'V' 'M' 'D' 'K' */
 	static public final long MAGICNUMBER = 0x564d444bL;

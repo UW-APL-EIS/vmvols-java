@@ -44,26 +44,31 @@ abstract public class VirtualMachine {
 		  We then build a 'dummy' vm around that one file.
 		*/
 		VirtualDisk vd = null;
-		final String name = f.getName();
+		String name = f.getName();
 		if( false ) {
 		} else if( name.endsWith( VDIDisk.FILESUFFIX ) ) {
 			try {
 				vd = VDIDisk.readFrom( f );
+				int last = name.length() - VDIDisk.FILESUFFIX.length(); 
+				name = name.substring( 0, last - 1 );
 			} catch( VDIException e ) {
 			}
 		} else if( name.endsWith( VMDKDisk.FILESUFFIX ) ) {
 			try {
 				vd = VMDKDisk.readFrom( f );
+				int last = name.length() - VMDKDisk.FILESUFFIX.length(); 
+				name = name.substring( 0, last - 1 );
 			} catch( VMDKException e ) {
 			}
 		}
 		if( vd == null )
 			return null;
 		final VirtualDisk vdf = vd;
+		final String namef = name;
 		return new VirtualMachine() {
 			@Override
 			public String getName() {
-				return name;
+				return namef;
 			}
 			
 			@Override

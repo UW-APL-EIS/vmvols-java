@@ -4,53 +4,41 @@
 			     http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>edu.uw.apl.commons</groupId>
+  <parent>
+    <groupId>edu.uw.apl.commons</groupId>
+    <artifactId>vmvols-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
   <artifactId>vmvols-model</artifactId>
   <version>2.1.0</version>
-  <name>Virtual Machine Volumes: Model Objects</name>
+  <name>Virtual Machine Disk Manipulation: Model Objects</name>
   
   <dependencies>
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.0.1</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.5</version>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.13</version>
-<!--      <scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
   
   <build>
-    <defaultGoal>compile</defaultGoal>
-    <plugins>
-      <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-compiler-plugin</artifactId>
-	<version>2.5</version>
-	<configuration>
-	  <source>1.5</source>
-	  <target>1.5</target>
-	</configuration>
-      </plugin>
-    </plugins>
   </build>
 </project>

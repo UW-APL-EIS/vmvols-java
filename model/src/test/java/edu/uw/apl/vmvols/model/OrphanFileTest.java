@@ -51,7 +51,7 @@ public class OrphanFileTest extends junit.framework.TestCase {
 		for( File f : fs ) {
 			System.out.println( f );
 			VirtualMachine vm = VirtualMachine.create( f );
-			assertEquals( vm.getName(), f.getName() );
+			assertTrue( f.getName().startsWith( vm.getName() ) );
 			List<VirtualDisk> base = vm.getBaseDisks();
 			assertEquals( base.size(), 1 );
 		}

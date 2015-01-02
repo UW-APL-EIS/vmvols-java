@@ -1,6 +1,5 @@
 package edu.uw.apl.vmvols.model.vmware;
 
-
 import java.io.DataInput;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -15,7 +14,8 @@ import java.util.Map;
 
 import org.apache.commons.io.EndianUtils;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
