@@ -16,7 +16,9 @@
   <packaging>pom</packaging>
 
   <name>Virtual Machine Disk Manipulation: Parent</name>
+  <description>Accessing virtual machine disk data on the host</description>
   <url>http://eis.apl.uw.edu</url>
+  <inceptionYear>2013</inceptionYear>
   
   <modules>
     <module>model</module>
@@ -29,16 +31,6 @@
     <url>http://www.apl.uw.edu</url>
   </organization>
 
-  <profiles>
-    <profile>
-      <id>tester</id>
-      <properties>
-	<skipTests>false</skipTests>
-      </properties>
-    </profile>
-  </profiles>
-
-
   <developers>
     <developer>
       <id>stuart</id>
@@ -46,7 +38,17 @@
       <email>stuart@apl.uw.edu</email>
     </developer>
   </developers>
-  
+
+  <profiles>
+    <profile>
+      <!-- Only the 'tester' profile runs unit tests -->
+      <id>tester</id>
+      <properties>
+	<skipTests>false</skipTests>
+      </properties>
+    </profile>
+  </profiles>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
