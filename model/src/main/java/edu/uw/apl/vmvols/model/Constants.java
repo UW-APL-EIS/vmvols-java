@@ -1,5 +1,10 @@
 package edu.uw.apl.vmvols.model;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Various simple math constants in the domain of disk size processing
+ */
 public class Constants {
 
 	static public final int SECTORLENGTH = 512;

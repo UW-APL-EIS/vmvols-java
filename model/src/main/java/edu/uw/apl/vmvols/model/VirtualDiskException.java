@@ -1,8 +1,11 @@
 package edu.uw.apl.vmvols.model;
 
 /**
+ *
+ * @author Stuart Maclean
+ 
    Base class of all things that could go wrong with parsing any form
-   of virtual disk file, i.e. a VBox .vdi or VMWare .vmdk file.
+   of virtual disk file, i.e. a VirtualBox .vdi or VMWare .vmdk file.
 
    Note that this is separate from IOExceptions.  Here we just care
    about understanding the data structures with the file.

@@ -3,8 +3,10 @@ package edu.uw.apl.vmvols.model;
 import java.io.IOException;
 
 /**
-   Partial implementation of the RandomAccessVolume interface.
-*/
+ * @author Stuart Maclean
+ *
+ * Partial implementation of the RandomAccessVolume interface.
+ */
 
 abstract public class AbstractRandomAccessVolume
 	implements RandomAccessVolume {

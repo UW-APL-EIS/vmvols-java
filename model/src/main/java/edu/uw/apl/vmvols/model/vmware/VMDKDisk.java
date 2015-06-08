@@ -22,6 +22,14 @@ import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 /**
+ * @author Stuart Maclean
+ *
+ * Data and logic common to all VMWare virtual disks (or some at
+ * least, not the VMFS ones!).  Hosted VMWare products, like
+ * Workstation, Player, as well as VM biulder tool 'packer' all
+ * manipulate variants of these disks, which use the .vmdk file
+ * suffix.
+ *
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
  * That excellent description made this reader very straightforward. Only
  * one missing detail: no endianness mentioned.  We guessed little-endian
@@ -53,7 +61,7 @@ abstract public class VMDKDisk extends VirtualDisk {
 	}
 
 	/**
-	 *  Any given .vmdk MAY start with a SparseExtentHeader...
+	 *  Any given .vmdk <em>may</em> start with a SparseExtentHeader...
 	 */
 	static public SparseExtentHeader locateSparseExtentHeader( File f )
 		throws IOException {
@@ -71,8 +79,8 @@ abstract public class VMDKDisk extends VirtualDisk {
 	   SparseExtentHeader.  That header may provide offset and 'size
 	   of' the enclosed Descriptor.  If this file has no
 	   SparseExtentHeader, it may just be a standalone Descriptor
-	   (quite why they use a common .vmdk suffix for wildly different
-	   file formats is beyond me!)
+	   (quite why they use a common .vmdk filename suffix for wildly
+	   different file contents/formats is beyond me!)
 	*/
 	static public Descriptor locateDescriptor( File f ) throws IOException {
 		SparseExtentHeader seh = null;
@@ -93,7 +101,13 @@ abstract public class VMDKDisk extends VirtualDisk {
 			return new Descriptor( ba );
 		}
 	}
-	
+
+	/**
+	 * Load a .vmdk file from disk into a VMDKDisk object.  Since
+	 * VMDKDisk is itself abstract, we actually create a concrete
+	 * subclass of it.  Which exact one is governed by details in the
+	 * Descriptor object located in the file.
+	 */
 	static public VMDKDisk readFrom( File vmdkFile ) throws IOException {
 		VMDKDisk result = null;
 
@@ -103,6 +117,7 @@ abstract public class VMDKDisk extends VirtualDisk {
 			if( d == null )
 				return null;
 		} catch( IllegalStateException ise ) {
+			// LOOK: null is best result ???
 			return null;
 		}
 		String type = d.getCreateType();
