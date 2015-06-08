@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+			     http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+      This pom is purely a vehicle for copying VMVols 3rd party
+      dependencies for users that DO have them built/installed into a
+      project-local Maven repo so that they can be added to git for
+      users that do NOT have them built/installed.  It is NOT part of
+      the VMVols codebase build process.  We do NOT have the VMVols
+      super-pom for a parent.  Conversely, the parent pom does NOT
+      list us as a module.
+  -->
+
+  <groupId>edu.uw.apl.commons</groupId>
+  <artifactId>vmvols-local-repo-builder</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>Virtual Machine Disk Manipulation - Third Party Artifact Bundling</name>
+
+  <properties>
+    <localRepo>../.repositoryXXX</localRepo>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>edu.uw.apl.commons</groupId>
+      <artifactId>fuse4j-core</artifactId>
+      <version>2400.0.1</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <defaultGoal>process-sources</defaultGoal>
+    <plugins>
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-dependency-plugin</artifactId>
+	<version>2.9</version>
+	<executions>
+	  <execution>
+	    <id>copy-dependencies</id>
+	    <goals>
+	      <goal>copy-dependencies</goal>
+	    </goals>
+	    <configuration>
+	      <useRepositoryLayout>true</useRepositoryLayout>
+	      <copyPom>true</copyPom>
+	      <addParentPoms>true</addParentPoms>
+	      <includeGroupIds>
+		edu.uw.apl.commons
+	      </includeGroupIds>
+	      <outputDirectory>${localRepo}</outputDirectory>
+	    </configuration>
+	  </execution>
+	</executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
