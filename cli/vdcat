@@ -13,7 +13,7 @@ ARTIFACT=vmvols-cli
 JAR=`ls $JARSHOME | grep $ARTIFACT | sort -n -r | head -1`
 
 PACKAGE=edu.uw.apl.vmvols.cli
-CLAZZ=VMDKInfo
+CLAZZ=VDCat
 
 exec java $JAVA_OPTS -classpath target/$JAR $PACKAGE.$CLAZZ "$@"
 

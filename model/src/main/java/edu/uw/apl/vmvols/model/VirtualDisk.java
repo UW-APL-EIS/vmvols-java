@@ -58,6 +58,7 @@ abstract public class VirtualDisk {
 	abstract public RandomAccessVirtualDisk getRandomAccess()
 		throws IOException;
 
+	// LOOK: Why am I counting from 0 here?  Surely 1 better?
 	public int getGeneration() {
 		if( parent == null )
 			return 0;

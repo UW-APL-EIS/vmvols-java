@@ -1,9 +1,22 @@
 package edu.uw.apl.vmvols.cli;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
+import java.io.IOException;
 
 import edu.uw.apl.vmvols.model.Utils;
 import edu.uw.apl.vmvols.model.virtualbox.*;
+
+/**
+ * @author Stuart Maclean
+ *
+ * Extract header details of the .vdi file supplied in args[0], and
+ * print these details to stdout.
+ *
+ * If any second argument supplied (could be -v but anything will
+ * do!?), read entire logical content of the file and md5sum that
+ * content too.
+ */
 
 public class VDIInfo {
 

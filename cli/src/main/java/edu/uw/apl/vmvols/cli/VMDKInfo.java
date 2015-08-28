@@ -5,6 +5,17 @@ import java.io.*;
 import edu.uw.apl.vmvols.model.Utils;
 import edu.uw.apl.vmvols.model.vmware.*;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Extract header and descriptor details of the .vmdk file supplied in
+ * args[0], and print these details to stdout.
+ *
+ * If any second argument supplied (could be -v but anything will
+ * do!?), read entire logical content of the file and md5sum that
+ * content too.
+ */
+
 public class VMDKInfo {
 
 	static public void main( String[] args ) {

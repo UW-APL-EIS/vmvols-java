@@ -1,0 +1,116 @@
+package edu.uw.apl.vmvols.cli;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+import org.apache.commons.cli.*;
+import org.apache.log4j.LogManager;
+
+import edu.uw.apl.vmvols.model.VirtualDisk;
+import edu.uw.apl.vmvols.model.VirtualMachine;
+
+/**
+ * @author Stuart Maclean
+ *
+ * Open the identified virtual disk file, supplied on args[0], and
+ * stream its entire <em>logical</em> contents to stdout.  By logical,
+ * we mean the disk content as seen by the VM were it to be powered
+ * up.  This implies that the content streamed is the latest
+ * 'Snapshot' were the disk to have any Snapshots.
+ *
+ * The file name as passed on args[0] can be either the directory of a
+ * VM or the name of a <b>base</b> virtual disk name, NOT a Snapshot
+ * file.
+
+ * We do NOT mean the physical content of actual file on disk on the
+ * host (for which plain cat would suffice).  Hence the name 'catvd',
+ * mimics the Unix tool cat.
+ *
+ * For a VirtualBox disk image file:
+ *
+ * $ VDCat /path/to/some/basefile.vdi
+ *
+ * For a VMWare disk image file:
+ *
+ * $ VDCat /path/to/some/basefile.vmdk
+ *
+ * For a VM directory rather than an identified file:
+ *
+ * $ VDCat /path/to/some/vmdir
+ *
+ * This last invocation will only work if the VM has a single hard
+ * drive, else command is ambiguous, and an individual virtual disk
+ * file name should be supplied instead.  In general, most VMs likely
+ * have only a single hard drive, so this ambiguity is rare.
+ *
+ * All the invocations above have the same effect as powering up the
+ * VM and doing something akin to 'cat /dev/sda' from within that VM.
+ */
+
+public class VDCat {
+
+	static public void main( String[] args ) {
+
+		final String usage = "Usage: " + VDCat.class.getName() +
+			" virtualDiskFile | virtualMachineDirectory";
+		if( args.length < 1 ) {
+			System.err.println( usage );
+			System.exit(1);
+		}
+
+		File f = new File( args[0] );
+		if( !f.exists() ) {
+			System.err.println( f + ": no such file or directory" );
+			System.exit(1);
+		}
+
+		try {
+			VirtualMachine vm = VirtualMachine.create( f );
+			if( vm == null )
+				throw new IllegalArgumentException( "Cannot build vm from " +
+													f );
+			List<VirtualDisk> disks = vm.getBaseDisks();
+			VirtualDisk vd = null;
+			if( disks.size() == 1 ) {
+				vd = disks.get(0);
+			} else {
+				if( f.isDirectory() ) {
+					throw new IllegalArgumentException
+						( "VM created from " + f + " has " + disks.size() +
+						  " disks, must specify one." );
+				}
+				// On one of these MUST succeed, so vd cannot be left null
+				for( int i = 0; i < disks.size(); i++ ) {
+					VirtualDisk el = disks.get(i);
+					if( el.getPath().equals( f ) ) {
+						vd = el;
+						break;
+					}
+				}
+			}
+
+			/*
+			  Thus far been working in base disk space.
+			  What we are actually going to cat is the ACTIVE disk
+			  content
+			*/
+			vd = vd.getActive();
+			
+			InputStream is = vd.getInputStream();
+			byte[] ba = new byte[1024*1024];
+			while( true ) {
+				int nin = is.read( ba );
+				if( nin < 1 )
+					break;
+				System.out.write( ba, 0, nin );
+			}
+			is.close();
+		} catch( IOException ioe ) {
+			System.err.println( ioe );
+		}
+	}
+}
+
+// eof
