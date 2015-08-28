@@ -3,7 +3,26 @@ package edu.uw.apl.vmvols.model;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Abstract class defining two abstract methods and a series of helper
+ * functions for the end goal of reading from and writing to a virtual
+ * disk at an arbitrary disk sector and sub-sector location.  These
+ * writes are at the disk level, i.e. 'underneath' any filesystem
+ * which may be on the disk.
+ *
+ * Subclasses must define just
+ *
+ * readImpl
+ * writeImpl
+ *
+ * We subclass InputStream, and steal a partial write-oriented API
+ * from RandomAccessFile.
+ */
+
 abstract public class RandomAccessVirtualDisk extends InputStream {
+
 	protected RandomAccessVirtualDisk( long size ) {
 		this.size = size;
 		posn = 0;

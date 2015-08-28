@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" 
 	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
@@ -16,7 +17,9 @@
   <packaging>pom</packaging>
 
   <name>Virtual Machine Disk Manipulation: Parent</name>
+  <description>Accessing virtual machine disk data on the host</description>
   <url>http://eis.apl.uw.edu</url>
+  <inceptionYear>2013</inceptionYear>
   
   <modules>
     <module>model</module>
@@ -25,12 +28,41 @@
   </modules>
 
   <organization>
-    <name>Applied Physics Laboratory, University of Washington</name>
+    <name>Applied Physics Laboratory, University of Washington (APL/UW)</name>
     <url>http://www.apl.uw.edu</url>
   </organization>
 
+  <developers>
+    <developer>
+      <id>stuart</id>
+      <name>Stuart Maclean</name>
+      <email>stuart@apl.uw.edu</email>
+      <organization>APL/UW</organization>
+      <organizationUrl>http://www.apl.uw.edu</organizationUrl>
+      <roles>
+	<role>architect</role>
+	<role>developer</role>
+      </roles>
+      <timezone>America/Los_Angeles</timezone>
+      <properties>
+	<picUrl>
+	  http://www.apl.washington.edu/people/profile.php?last_name=Maclean&amp;first_name=Stuart
+	</picUrl>
+      </properties>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git@github.com:uw-dims/vmvols.git</connection>
+    <developerConnection>
+      scm:git:git@github.com:uw-dims/vmvols.git
+    </developerConnection>
+    <url>git@github.com:uw-dims/vmvols.git</url>
+  </scm>
+
   <profiles>
     <profile>
+      <!-- Only the 'tester' profile runs unit tests -->
       <id>tester</id>
       <properties>
 	<skipTests>false</skipTests>
@@ -38,15 +70,6 @@
     </profile>
   </profiles>
 
-
-  <developers>
-    <developer>
-      <id>stuart</id>
-      <name>Stuart Maclean</name>
-      <email>stuart@apl.uw.edu</email>
-    </developer>
-  </developers>
-  
   <dependencyManagement>
     <dependencies>
       <dependency>

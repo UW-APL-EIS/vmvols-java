@@ -10,8 +10,20 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-
+/**
+ *
+ * @author Stuart Maclean
+ *
+ * Base class for all virtual disks.  Currently we have two subclass
+ * families: one for VirtualBox disks and one for VMWare disks.
+ *
+ * For more info on virtual disk snapshotting, and how it leads to a
+ * hierarchy of disks in a parent/child tree, see e.g.
+ *
+ * http://searchvmware.techtarget.com/tip/How-VMware-snapshots-work
+ */
 abstract public class VirtualDisk {
+	
 	protected VirtualDisk( File source ) {
 		this.source = source;
 		log = LogFactory.getLog( getClass() );
@@ -25,6 +37,12 @@ abstract public class VirtualDisk {
 		return size() / Constants.SECTORLENGTH;
 	}
 
+	/**
+	 * Snapshots result in a parent-child relationships between disks.
+	 * The frozen disk is the parent, the varying disk is the child,
+	 * and changes as that disk is written.  Which of these is 'the
+	 * snapshot' is a matter of interpretation!
+	 */
 	public void setChild( VirtualDisk vd ) {
 		child = vd;
 		vd.setParent( this );
@@ -42,11 +60,15 @@ abstract public class VirtualDisk {
 
 	
 	/**
-	 * Mimic what a physical disk would return for a low-level ATA
-	 * inquiry of its 'serial number'
+	 * Mimic what a physical disk would return for a low-level
+	 * ATA/SCSI inquiry of its 'serial number'.  We'll likely use the
+	 * UUIDs that VM engines use to manage virtual disks.
 	 */
 	abstract public String getID();
-	
+
+	/**
+	 * Size of this virtual disk, in bytes
+	 */
 	abstract public long size();
 
 	abstract public UUID getUUID();
@@ -58,25 +80,52 @@ abstract public class VirtualDisk {
 	abstract public RandomAccessVirtualDisk getRandomAccess()
 		throws IOException;
 
-	// LOOK: Why am I counting from 0 here?  Surely 1 better?
+	/**
+	 * @return Disk generation, where a newly created, never
+	 * snapshotted-disk is assigned a generation of 0.  Each snapshot
+	 * introduces a new child, and a corresponding increment of the
+	 * generation value.
+	 *
+	 * LOOK: Why am I counting from 0 here?  Surely 1 better?
+	 */
 	public int getGeneration() {
 		if( parent == null )
 			return 0;
 		return 1 + parent.getGeneration();
 	}
 
+	/**
+	 * @return The disk in the parent-child disk tree which includes
+	 * this disk and has generation 0.  For disk which has never been
+	 * snapshotted, generation is 0 and getBase and getActive return
+	 * this.
+	 *
+	 * @see getGeneration
+	 */
 	public VirtualDisk getBase() {
 		if( parent == null )
 			return this;
 		return parent.getBase();
 	}
 
+	/**
+	 * @return The disk in the parent-child disk tree which is the
+	 * 'live' disk and would be read/written were the VM containing
+	 * that disk to be powered on.
+	 */
 	public VirtualDisk getActive() {
 		if( child == null )
 			return this;
 		return child.getActive();
 	}
 
+	/**
+	 * @return the virtual disk in the hierarchy which includes this
+	 * disk and has the specified generation value.
+	 *
+	 * @throws IllegalArgumentException if i denotes some non-existent
+	 * generation.
+	 */
 	public VirtualDisk getGeneration( int i ) {
 		int g = getGeneration();
 		if( g == i )
@@ -92,13 +141,19 @@ abstract public class VirtualDisk {
 					( source + ": No generation " + i );
 		return child.getGeneration( i );
 	}
-	
+
+	/**
+	 * @return All the ancestors of this disk, i.e. all parents,
+	 * across all snapshots, recursively.  Empty if no snapshots ever
+	 * taken, or this disk the first created in a snapshot family.
+	 */
 	public List<VirtualDisk> getAncestors() {
 		List<VirtualDisk> result = new ArrayList<VirtualDisk>();
 		getAncestors( result );
 		return result;
 	}
 
+	// Private helper routine for getAncestors(), using recursion of course!
 	private void getAncestors( List<VirtualDisk> accumulator ) {
 		if( parent == null )
 			return;
