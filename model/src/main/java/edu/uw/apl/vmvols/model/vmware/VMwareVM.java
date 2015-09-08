@@ -35,9 +35,9 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  * running.  It is the 'current snapshot'.  This API also supports
  * accessing any 'generation' (Snapshot) of any disk, all the way up
  * the 'base disk' (which has generation 1), which is held in the file
- * VirtualBox created when the VM was first built.  If a VM has never
- * had a Snapshot taken, its active disk(s) and base disk(s) are the
- * same thing.
+ * the VMWare app (Workstation?)  created when the VM was first built.
+ * If a VM has never had a Snapshot taken, its active disk(s) and base
+ * disk(s) are the same thing.
  *
  * @see VBoxVM
  */
