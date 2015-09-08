@@ -3,6 +3,7 @@ package edu.uw.apl.vmvols.cli;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.cli.*;
@@ -22,10 +23,11 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  *
  * The file name as passed on args[0] can be either the directory of a
  * VM or the name of a <b>base</b> virtual disk name, NOT a Snapshot
- * file.
+ * file.  We automatically then locate the <b>active</b> file from the
+ * base one.
 
  * We do NOT mean the physical content of actual file on disk on the
- * host (for which plain cat would suffice).  Hence the name 'catvd',
+ * host (for which plain cat would suffice).  Hence the name 'vdcat',
  * mimics the Unix tool cat.
  *
  * For a VirtualBox disk image file:
@@ -47,6 +49,8 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  *
  * All the invocations above have the same effect as powering up the
  * VM and doing something akin to 'cat /dev/sda' from within that VM.
+ * Note that this is disk-level access, i.e. from first sector of
+ * disk.  It is not file-system level access.
  */
 
 public class VDCat {
@@ -54,7 +58,7 @@ public class VDCat {
 	static public void main( String[] args ) {
 
 		final String usage = "Usage: " + VDCat.class.getName() +
-			" virtualDiskFile | virtualMachineDirectory";
+			" (virtualDiskFile | virtualMachineDirectory)";
 		if( args.length < 1 ) {
 			System.err.println( usage );
 			System.exit(1);
@@ -77,11 +81,14 @@ public class VDCat {
 				vd = disks.get(0);
 			} else {
 				if( f.isDirectory() ) {
+					List<File> fs = new ArrayList<File>();
+					for( VirtualDisk el : disks )
+						fs.add( el.getPath() );
 					throw new IllegalArgumentException
 						( "VM created from " + f + " has " + disks.size() +
-						  " disks, must specify one." );
+						  " disks (" + fs + "), must specify one." );
 				}
-				// On one of these MUST succeed, so vd cannot be left null
+				// One of these MUST succeed, so vd cannot be left null
 				for( int i = 0; i < disks.size(); i++ ) {
 					VirtualDisk el = disks.get(i);
 					if( el.getPath().equals( f ) ) {
@@ -92,13 +99,15 @@ public class VDCat {
 			}
 
 			/*
-			  Thus far been working in base disk space.
+			  Thus far been working in base disk space,
+			  i.e. generation 1 of any disk associated with the VM.
 			  What we are actually going to cat is the ACTIVE disk
-			  content
+			  content...
 			*/
 			vd = vd.getActive();
 			
 			InputStream is = vd.getInputStream();
+
 			byte[] ba = new byte[1024*1024];
 			while( true ) {
 				int nin = is.read( ba );
@@ -107,8 +116,8 @@ public class VDCat {
 				System.out.write( ba, 0, nin );
 			}
 			is.close();
-		} catch( IOException ioe ) {
-			System.err.println( ioe );
+		} catch( Exception e ) {
+			System.err.println( e );
 		}
 	}
 }
