@@ -83,29 +83,7 @@ public class Utils {
 		byte[] hash = md5.digest();
 		return Hex.encodeHexString( hash );
 	}
-
-	static public String md5sum( RandomAccessVolume rav ) throws IOException {
-		return md5sum( rav, 1024*1024 );
-	}
-
-	// grr, this is the SAME logic as InputStream...
-	static public String md5sum( RandomAccessVolume rav, int blockSize )
-		throws IOException {
-		MessageDigest md5 = null;
-		try {
-			md5 = MessageDigest.getInstance( "md5" );
-		} catch( Exception e ) {
-			// never
-		}
-		int nin;
-		byte[] ba = new byte[blockSize];
-		while( (nin = rav.read( ba )) != -1 ) {
-			md5.update( ba, 0, nin );
-		}
-		byte[] hash = md5.digest();
-		return Hex.encodeHexString( hash );
-	}
-
+	
 	/**
 	   Given a byte count, express as a short string with units.  Much
 	   like the output of 'df -h'

@@ -22,6 +22,8 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
 import edu.uw.apl.vmvols.model.vmware.VMDKException;
 
 /**
+ * @author Stuart Maclean
+ *
  * To locate the virtual disk(s) in a VirtualBox vm directory, do this:
  *
  * File theDir = ....
@@ -34,8 +36,15 @@ import edu.uw.apl.vmvols.model.vmware.VMDKException;
  * An 'active' disk is one which would be written to were the VM to be
  * running.  It is the 'current snapshot'.  This API also supports
  * accessing any 'generation' (Snapshot) of any disk, all the way up
- * the 'base disk', which is held in the file VirtualBox created when
- * the VM was first built.
+ * the 'base disk' (which has generation 1), which is held in the file
+ * VirtualBox created when the VM was first built.  If a VM has never
+ * had a Snapshot taken, its active disk(s) and base disk(s) are the
+ * same thing.
+ *
+ * Currently we support just .vdi (native to VirtualBox) and .vmdk
+ * (imported from VMWare) virtual disk drive formats.  VirtualBox
+ * itself supports others, but I have never used/created one so have
+ * no experience with those formats.
  */
 public class VBoxVM extends VirtualMachine {
 
@@ -100,8 +109,11 @@ public class VBoxVM extends VirtualMachine {
 			/*
 			  When the supplied file is a single vd file and not
 			  a vbox vm dir, we add JUST the supplied file to the basedisks.
-			  We still derive the children it may have, since it must be
-			  linked so we can access its active disk
+			  We do NOT try to locate any other disks that are also owned
+			  by the same VM.
+			  
+			  We still derive the children the single disk may have,
+			  since it must be linked so we can access its active disk.
 			*/
 			
 			dir = f.getParentFile();
@@ -203,6 +215,5 @@ public class VBoxVM extends VirtualMachine {
 			}
 		};
 }
-
 
 // eof

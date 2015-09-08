@@ -20,6 +20,8 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 import edu.uw.apl.vmvols.model.VirtualMachine;
 
 /**
+ * @author Stuart Maclean
+ *
  * To locate the virtual disk(s) in a VMWare vm directory, do this:
  *
  * File theDir = ....
@@ -32,8 +34,12 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  * An 'active' disk is one which would be written to were the VM to be
  * running.  It is the 'current snapshot'.  This API also supports
  * accessing any 'generation' (Snapshot) of any disk, all the way up
- * the 'base disk', which is held in the file VirtualBox created when
- * the VM was first built.
+ * the 'base disk' (which has generation 1), which is held in the file
+ * VirtualBox created when the VM was first built.  If a VM has never
+ * had a Snapshot taken, its active disk(s) and base disk(s) are the
+ * same thing.
+ *
+ * @see VBoxVM
  */
 public class VMwareVM extends VirtualMachine {
 

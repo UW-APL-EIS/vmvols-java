@@ -82,22 +82,20 @@ abstract public class VirtualDisk {
 
 	/**
 	 * @return Disk generation, where a newly created, never
-	 * snapshotted-disk is assigned a generation of 0.  Each snapshot
+	 * snapshotted-disk is assigned a generation of 1.  Each snapshot
 	 * introduces a new child, and a corresponding increment of the
 	 * generation value.
-	 *
-	 * LOOK: Why am I counting from 0 here?  Surely 1 better?
 	 */
 	public int getGeneration() {
 		if( parent == null )
-			return 0;
+			return 1;
 		return 1 + parent.getGeneration();
 	}
 
 	/**
 	 * @return The disk in the parent-child disk tree which includes
-	 * this disk and has generation 0.  For disk which has never been
-	 * snapshotted, generation is 0 and getBase and getActive return
+	 * this disk and has generation 1.  For disk which has never been
+	 * snapshotted, generation is 1 and getBase and getActive return
 	 * this.
 	 *
 	 * @see getGeneration
@@ -136,9 +134,10 @@ abstract public class VirtualDisk {
 					( source + ": No generation " + i );
 			return parent.getGeneration( i );
 		}
+		// g > i 
 		if( child == null )
-				throw new IllegalArgumentException
-					( source + ": No generation " + i );
+			throw new IllegalArgumentException
+				( source + ": No generation " + i );
 		return child.getGeneration( i );
 	}
 

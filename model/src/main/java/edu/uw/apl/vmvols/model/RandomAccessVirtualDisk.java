@@ -10,7 +10,7 @@ import java.io.InputStream;
  * functions for the end goal of reading from and writing to a virtual
  * disk at an arbitrary disk sector and sub-sector location.  These
  * writes are at the disk level, i.e. 'underneath' any filesystem
- * which may be on the disk.
+ * which may be on the (virtual) disk.
  *
  * Subclasses must define just
  *

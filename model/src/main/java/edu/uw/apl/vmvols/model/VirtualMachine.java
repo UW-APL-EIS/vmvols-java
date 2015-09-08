@@ -12,6 +12,10 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
 import edu.uw.apl.vmvols.model.vmware.VMDKException;
 import edu.uw.apl.vmvols.model.vmware.VMwareVM;
 
+/**
+ * @author Stuart Maclean
+ */
+
 abstract public class VirtualMachine {
 
 	/**

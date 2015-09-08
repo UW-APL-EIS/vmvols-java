@@ -11,6 +11,9 @@ import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 /**
+ * @author Stuart Maclean
+ *
+
    From VDICore.h...
    
    Normal dynamically growing base image file. 
@@ -20,7 +23,9 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
    dynamically.  Not all blocks are allocated when the image is
    constructed.  A read of a 'missing' block results in a zero or
    'random' value, according to the block entry value for that block.
-   In practice, 'random' means 'zero'.  */
+   In practice, 'random' means 'zero'.
+
+*/
 
 public class NormalDisk extends DynamicDisk {
 	
@@ -114,10 +119,16 @@ public class NormalDisk extends DynamicDisk {
 				int nin;
 				switch( bme ) {
 				case VDI_IMAGE_BLOCK_FREE:
+					if( log.isTraceEnabled() ) {
+						log.trace( "BLOCK_FREE " + posn + " " + fromBlock );
+					}
 					// have a random block pre-allocated, fill from it...
 					System.arraycopy( randomBlock, 0, ba, off+total, fromBlock);
 					break;
 				case VDI_IMAGE_BLOCK_ZERO: 
+					if( log.isTraceEnabled() ) {
+						log.trace( "BLOCK_ZERO " + posn + " " + fromBlock );
+					}
 					// have a zero block pre-allocated, fill from it...
 					System.arraycopy( zeroBlock, 0, ba, off+total, fromBlock );
 					break;
@@ -245,8 +256,10 @@ public class NormalDisk extends DynamicDisk {
 	private final byte[] zeroBlock;
 	
 	/**
-	 * Block marked as free is not allocated in image file, read from this
-	 * block may returns any random data.
+	 * Block marked as free is not allocated in image file, read from
+	 * this block may return any random data (?? surely zeros ?? What
+	 * would a real new disk have on it before any file system
+	 * placement??  )
 	 */
 	//	#define VDI_IMAGE_BLOCK_FREE   ((VDIIMAGEBLOCKPOINTER)~0)
 
@@ -261,7 +274,7 @@ public class NormalDisk extends DynamicDisk {
 	
 	/*
 	  In our experience, block size seems to be 1MB, so prealloc
-	  random and zero blocks for all those DynamicDiskInputStreams
+	  random and zero blocks for all those RandomAccessVirtualDisks
 	  that can use them (so saving on per-stream copies)
 	*/
 	static private final byte[] RANDOMBLOCK_20 = new byte[1024*1024];

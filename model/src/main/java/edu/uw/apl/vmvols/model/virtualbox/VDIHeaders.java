@@ -10,7 +10,11 @@ import java.util.UUID;
 
 import org.apache.commons.io.EndianUtils;
 
-public class VDIHeaders {
+/**
+ * @author Stuart Maclean
+ *
+ */
+ public class VDIHeaders {
 
 	static VDIHeader parse( File f ) throws IOException {
 		RandomAccessFile raf = new RandomAccessFile( f, "r" );
@@ -194,6 +198,11 @@ public class VDIHeaders {
 			pw.println( "type: " + type );
 			pw.println( "uuidCreate: " + uuidCreate );
 			pw.println( "uuidParent: " + uuidLinkage );
+			pw.println( "diskSize  : " + diskSize );
+			pw.println( "blockSize : " + blockSize );
+			pw.println( "blockCount: " + blockCount );
+			pw.println( "blocksOffset: " + blocksOffset );
+			pw.println( "dataOffset: " + dataOffset );
 			return sw.toString();
 		}
 		
@@ -202,6 +211,7 @@ public class VDIHeaders {
 		long blocksOffset, dataOffset, diskSize;
 		long blockSize;
 		long blockCount;
+		
 		UUID uuidCreate;
 		UUID uuidLinkage;
 	}

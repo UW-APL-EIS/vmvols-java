@@ -1,0 +1,242 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+			     http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>fuse4j-parent</artifactId>
+    <groupId>fuse4j</groupId>
+    <version>3.0.0</version>
+  </parent>
+
+  <artifactId>fuse4j-core</artifactId>
+    
+  <properties>
+    <!-- Override this by activating the 'tester' profile -->
+    <skipTests>true</skipTests>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>edu.uw.apl.commons</groupId>
+      <artifactId>native-lib-loader</artifactId>
+      <version>2.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    </dependencies>
+
+    <repositories>
+      <!-- 
+	   To locate our dependent artifacts which are not (yet)
+	   available at Maven Central, we bundle them into this
+	   project-local repo.  Alternatively, user could grab sources
+	   from github, see
+	   https://github.com/uw-dims/java-native-loader.git
+      -->
+      <repository>
+	<id>fuse4j.local</id>
+	<name>fuse4j-local</name>
+	<url>file:${project.basedir}/../.repository</url>
+	<releases>
+	  <updatePolicy>always</updatePolicy>
+	</releases>
+      </repository>
+    </repositories>
+
+    <build>
+      <defaultGoal>compile</defaultGoal>
+      <plugins>
+	<plugin>
+	  <artifactId>maven-compiler-plugin</artifactId>
+	  <version>2.5</version>
+	  <configuration>
+	    <source>1.5</source>
+	    <target>1.5</target>
+	  </configuration>
+	</plugin>
+
+	<plugin>
+	  <artifactId>maven-surefire-plugin</artifactId>
+	  <version>2.18.1</version>
+	  <configuration>
+	    <skipTests>${skipTests}</skipTests>
+	  </configuration>
+	</plugin>
+      </plugins>
+    </build>
+
+    <!--
+	We only try to build/package the native (jni) code if we are a
+	'power' user: mvn -Pnative.  Once done, we then 'git add' the
+	resultant .so/.dll sitting under src/main/resources.  Then
+	'regular' users see this lib as just a resource to bundle into
+	the runtime jar.
+    -->
+    <profiles>
+      <!-- Canonicalise all 32-bit arch names to 'x86' -->
+      <profile>
+	<id>x86</id>
+	<activation>
+	  <os>
+	    <arch>x86</arch>
+	  </os>
+	</activation>
+	<properties>
+	  <arch>x86</arch>
+	</properties>
+      </profile>
+      <profile>
+	<id>i386</id>
+	<activation>
+	  <os>
+	    <arch>i386</arch>
+	  </os>
+	</activation>
+	<properties>
+	  <arch>x86</arch>
+	</properties>
+      </profile>
+      
+      <!-- Canonicalise all 64-bit arch names to 'x86_64' -->
+      <profile>
+	<id>x86_64</id>
+	<activation>
+	  <os>
+	    <arch>x86_64</arch>
+	  </os>
+	</activation>
+	<properties>
+	  <arch>x86_64</arch>
+	</properties>
+      </profile>
+      <profile>
+	<id>amd64</id>
+	<activation>
+	  <os>
+	    <arch>amd64</arch>
+	  </os>
+	</activation>
+	<properties>
+	  <arch>x86_64</arch>
+	</properties>
+      </profile>
+      
+      <profile>
+	<id>native</id>
+	<build>
+	  <plugins>
+	    <plugin>
+	      <groupId>org.codehaus.mojo</groupId>
+	      <artifactId>native-maven-plugin</artifactId>
+	      <version>1.0-alpha-8</version>
+	      <executions>
+		<execution>
+		  <id>javah</id>
+		  <phase>compile</phase>
+		  <configuration>
+		    <!-- 
+			 Appears that no fuse4j C file includes any
+			 javah-generated headers, so we have no need
+			 for any javah step ?? We list the .java files
+			 that have native methods anyway, see next.
+		    -->
+		    <!--
+			<javahClassNames>
+			<javahClassName>
+			fuse.FuseContext
+			</javahClassName>
+			<javahClassName>
+			fuse.FuseFSFillDir
+			</javahClassName>
+			<javahClassName>
+			fuse.FuseMount
+			</javahClassName>
+			<javahClassName>
+			fuse.PasswordEntry
+			</javahClassName>
+			</javahClassNames>
+		    -->
+		  </configuration>
+		  <goals>
+		    <goal>javah</goal>
+		  </goals>
+		</execution>
+	      </executions>
+	    </plugin>
+	    <plugin>
+	      <groupId>org.codehaus.mojo</groupId>
+	      <artifactId>exec-maven-plugin</artifactId>
+	      <version>1.1</version>
+	      <executions>
+		<execution>
+		  <id>build.native</id>
+		  <phase>compile</phase>
+		  <goals>
+		    <goal>exec</goal>
+		  </goals>
+		  <configuration>
+		    <workingDirectory>
+		      src/main/native/${os.name}/${arch}
+		    </workingDirectory>
+		    <executable>make</executable>
+		    <commandlineArgs>install</commandlineArgs>
+		    <environmentVariables>
+		      <ARCH>${arch}</ARCH>
+		      <!-- LOOK: Is this valid, using .. ? -->
+		      <JDK_HOME>${java.home}/..</JDK_HOME>
+		      <PREFIX>fuse</PREFIX>
+		      <LIBNAME>fuse4j-core</LIBNAME>
+		    </environmentVariables>
+		  </configuration>
+		</execution>
+		
+		<execution>
+		  <id>clean.native</id>
+		  <phase>clean</phase>
+		  <goals>
+		    <goal>exec</goal>
+		  </goals>
+		  <configuration>
+		    <workingDirectory>
+		      src/main/native/${os.name}/${arch}
+		    </workingDirectory>
+		    <executable>make</executable>
+		    <commandlineArgs>clean</commandlineArgs>
+		    <environmentVariables>
+		      <ARCH>${arch}</ARCH>
+		      <!-- LOOK: Is this valid, using .. ? -->
+		      <JDK_HOME>${java.home}/..</JDK_HOME>
+		      <PREFIX>fuse</PREFIX>
+		      <LIBNAME>fuse4j-core</LIBNAME>
+		    </environmentVariables>
+		  </configuration>
+		</execution>
+	      </executions>
+	    </plugin>
+	  </plugins>
+	</build>
+      </profile>
+
+      <profile>
+	<id>tester</id>
+	<properties>
+	  <skipTests>false</skipTests>
+	</properties>
+      </profile>
+
+    </profiles>
+
+
+
+</project>

@@ -245,7 +245,10 @@ abstract public class VDIDisk extends VirtualDisk {
 	static public final int VDI_IMAGE_TYPE_DIFF = 4;
 
 
+	//	#define VDI_IMAGE_BLOCK_FREE   ((VDIIMAGEBLOCKPOINTER)~0)
 	static public final int VDI_IMAGE_BLOCK_FREE = ~0;
+
+	//	#define VDI_IMAGE_BLOCK_ZERO   ((VDIIMAGEBLOCKPOINTER)~1)
 	static public final int VDI_IMAGE_BLOCK_ZERO = ~1;
 }
 

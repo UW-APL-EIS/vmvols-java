@@ -40,11 +40,14 @@ public class VBoxFileInDirTest extends junit.framework.TestCase {
 		if( vdFile.isDirectory() )
 			fail( "Not a file: " + vdFile );
 		System.err.println( vdFile );
+		/*
+		  Recall that a VBox VM built from a specific .vdi file (as
+		  opposed to a directory) maintains JUST that ONE disk, NOT
+		  any others, hence the base disk count expected to be 1
+		*/
 		VBoxVM vm = new VBoxVM( vdFile );
 		List<VirtualDisk> base = vm.getBaseDisks();
 		assertEquals( base.size(), 1 );
-		
-													   
 	}
 }
 

@@ -2,6 +2,11 @@ package edu.uw.apl.vmvols.model.virtualbox;
 
 import java.util.UUID;
 
+/**
+ * @author Stuart Maclean
+ *
+ */
+
 public interface VDIHeader {
 	long imageType();
 	long blocksOffset();

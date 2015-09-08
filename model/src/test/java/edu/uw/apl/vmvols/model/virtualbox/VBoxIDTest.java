@@ -8,6 +8,14 @@ import java.util.List;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Test correct opening, disk identfication, etc of a set of VirtualBox
+ * VMs, nominally found under a single root.  We likely build a symlink
+ * from our 'real' VBox VM directory (typically ~/VBox) to ./data/VBox
+ */
+
 public class VBoxIDTest extends junit.framework.TestCase {
 	
 	public void testAll() throws Exception {
@@ -25,6 +33,7 @@ public class VBoxIDTest extends junit.framework.TestCase {
 		}
 	}
 
+	// LOOK: Not asserting anything here ??
 	void test( File dir ) throws IOException {
 		if( !VBoxVM.isVBox( dir ) )
 			return;
