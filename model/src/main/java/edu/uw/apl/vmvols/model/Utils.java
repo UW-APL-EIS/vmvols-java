@@ -6,8 +6,15 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.util.List;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.codec.binary.Hex;
+
+/**
+ * @author Stuart Maclean
+ *
+ * Various utility methods related to reading from InputStreams
+ */
 
 public class Utils {
 
@@ -45,12 +52,16 @@ public class Utils {
 	}
 
 	/**
-	 * @result count of bytes read from stream until eof reached
+	 * @result Count of bytes read from stream until eof reached
 	 */
 	static public long size( InputStream is ) throws IOException {
 		return size( is, 1024*1024 );
 	}
 	
+	/**
+	 * @result Count of bytes read from stream until eof reached, with
+	 * reads in blocks of blockSize.
+	 */
 	static public long size( InputStream is, int blockSize )
 		throws IOException {
 		long result = 0;
@@ -58,7 +69,6 @@ public class Utils {
 		byte[] ba = new byte[blockSize];
 		while( (nin = is.read( ba )) != -1 ) {
 			result += nin;
-			//			System.out.println( nin + " " + result );
 		}
 		return result;
 	}
@@ -72,8 +82,7 @@ public class Utils {
 		MessageDigest md5 = null;
 		try {
 			md5 = MessageDigest.getInstance( "md5" );
-		} catch( Exception e ) {
-			// never
+		} catch( NoSuchAlgorithmException neverSinceMD5Required ) {
 		}
 		int nin;
 		byte[] ba = new byte[blockSize];
@@ -86,7 +95,7 @@ public class Utils {
 	
 	/**
 	   Given a byte count, express as a short string with units.  Much
-	   like the output of 'df -h'
+	   like the output of 'df -h'.  Example: 1024 -> "1K"
 	*/
 	static public String sizeEstimate( long bytes ) {
 		if( bytes < Constants.KiB ) {

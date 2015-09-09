@@ -15,7 +15,9 @@ import org.apache.commons.logging.LogFactory;
  * @author Stuart Maclean
  *
  * Base class for all virtual disks.  Currently we have two subclass
- * families: one for VirtualBox disks and one for VMWare disks.
+ * families: one for VirtualBox disks (contained normally in a file
+ * with a .vdi suffix) and one for VMWare disks (contained normally in
+ * a file with a .vmdk suffix).
  *
  * For more info on virtual disk snapshotting, and how it leads to a
  * hierarchy of disks in a parent/child tree, see e.g.
@@ -47,7 +49,12 @@ abstract public class VirtualDisk {
 		child = vd;
 		vd.setParent( this );
 	}
-	
+
+	/**
+	 * Set the parent of this disk to the supplied disk p.  A check is
+	 * made on the linkage between the two, using getUUID and
+	 * getUUIDParent.
+	 */
 	void setParent( VirtualDisk p ) {
 		UUID linkage = p.getUUID();
 		if( !linkage.equals( getUUIDParent() ) ) {
@@ -61,8 +68,9 @@ abstract public class VirtualDisk {
 	
 	/**
 	 * Mimic what a physical disk would return for a low-level
-	 * ATA/SCSI inquiry of its 'serial number'.  We'll likely use the
-	 * UUIDs that VM engines use to manage virtual disks.
+	 * ATA/SCSI inquiry of its 'serial number'.  We'll likely
+	 * use/include the UUIDs that VM engines use to manage virtual
+	 * disks.
 	 */
 	abstract public String getID();
 

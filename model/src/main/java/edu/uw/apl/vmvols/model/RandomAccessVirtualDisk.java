@@ -6,19 +6,22 @@ import java.io.InputStream;
 /**
  * @author Stuart Maclean
  *
- * Abstract class defining two abstract methods and a series of helper
+ * Abstract class defining three abstract methods and a series of helper
  * functions for the end goal of reading from and writing to a virtual
  * disk at an arbitrary disk sector and sub-sector location.  These
- * writes are at the disk level, i.e. 'underneath' any filesystem
+ * reads/writes are at the disk level, i.e. 'underneath' any filesystem
  * which may be on the (virtual) disk.
  *
  * Subclasses must define just
  *
  * readImpl
  * writeImpl
+ * seek
  *
  * We subclass InputStream, and steal a partial write-oriented API
- * from RandomAccessFile.
+ * from RandomAccessFile.  Especially useful is 'seek', allowing us to
+ * hop around the disk even when reading, a feature that is required
+ * by file system traversals by e.g. Sleuthkit.
  */
 
 abstract public class RandomAccessVirtualDisk extends InputStream {
