@@ -24,13 +24,17 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 import edu.uw.apl.vmvols.model.VirtualMachine;
 
 /**
+ * @author Stuart Maclean
+
    An implementation of fuse.FuseFS (via the higher level
    fuse.Filesystem3) where the 'filesystem' is simply a list of
    VirtualDisks (currently we have implemented virtualbox.vdi and
-   vmware.vmdk formats) under a single directory.  So a directory
-   listing presents a list of what looks like devices (.vdi files)
+   vmware.vmdk formats) under a single mount-point directory.  So a
+   directory listing presents a list of what looks like device files
+   (like /dev/sda is a device file in Linux representing your whole
+   hard drive).
    
-   All we really care about is getattr,open,read.  We have stub/noops
+   All we really care about is getattr,getdir,open,read.  We have stub/noops
    for the other parts of the fuse api.
 
    To actually make such an fs visible at the host OS-level, we do:
@@ -87,18 +91,26 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
    disk,
 
    /vm1name/sda 
-   /vm1name/sda0 
-   /vm1name/sda1
+   /vm1name/sda1 
+   /vm1name/sda2
    /vm1name/sdb 
-   /vm1name/sdb0
+   /vm1name/sdb1
 
-   In the example above, vm1name/sda and vm1name/sda1 have same
-   content (since disk sda1 is the active disk).  sda0 would contain
-   the disk content frozen by the snapshot.  Similarly for vm1name/sdb
-   and vm2name/sdb0.  Disk sdb would have been added AFTER the sole
+   In the example above, vm1name/sda and vm1name/sda2 have same
+   content (since disk sda2 is the active disk, the one the VM would
+   write to if it were powered on).  sda1 would contain the disk
+   content frozen by the snapshot.  Similarly for vm1name/sdb and
+   vm2name/sdb1.  Disk sdb would have been added AFTER the sole
    snapshot was taken, explaining why the generation sequencing of
    disk a is distinct from that of disk b. Disk a has two distinct
    contents, disk b has just one.
+
+   LOOK: More commentary in ./Main.java.  See especially the
+   discussion about 'sdaN' meaning the N'th state of the disk over
+   time and not the state of any partition, this vmfs does not expose
+   partitions, only whole device content.
+
+   @see Main
 */
    
 public class VirtualMachineFileSystem extends AbstractFilesystem3 {
@@ -205,6 +217,7 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 				 time, time, time);
 			return 0;
 		}
+
 		String details = path.substring(1);
 
 		// Path identifies just a vm by name, e.g. /someVMName
@@ -237,9 +250,11 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			if( log.isDebugEnabled() )
 				log.debug( "Is disk: " + details );
 			VirtualDisk vd = volumesByPath.get( details );
+			if( log.isTraceEnabled() )
+				log.trace( "Located disk: " + vd );
 			if( vd == null )
 				return Errno.ENOENT;
-			VirtualDisk initial = vd.getGeneration(0);
+			VirtualDisk initial = vd.getGeneration(1);
 			File f = initial.getPath();
 			int time = (int)(f.lastModified() / 1000L);
 			int mode = readOnly ? 0444 : 0644;
@@ -484,7 +499,8 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 	// Allow access from unit tests...
 
 	// LOOK: really ANY char that is not '/' is valid in a vm name
-	static final String NAMERE = "([\\p{Alnum}_\\-\\.]+)";
+	//	static final String NAMERE = "([\\p{Alnum}_\\-\\.]+)";
+	static final String NAMERE = "([^/]+)";
 	
 	static final String DISKRE = "sd([a-z])";
 

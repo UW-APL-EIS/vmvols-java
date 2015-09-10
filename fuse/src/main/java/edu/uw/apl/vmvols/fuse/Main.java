@@ -35,15 +35,77 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
  * with our mounting of it.  In fact, even for read access, the VM is
  * best powered off.
  *
+ * Example: We have a Linux VM whose files (on the host) live under
+ * /path/to/vms/L and a Windows VM whose files live under path/to/vms/W.
+ * Each VM has a single hard disk.
+ *
+ * We can mount both vms at once.  The command to do this is (assume
+ * vmmount is a shell script driver invoking this Main class)
+ *
+ * $ mkdir mount
+ * $ vmmount /path/to/vms/L /path/to/vms/W mount
+ *
+ * The filesystem under ./mount is then
+ *
+ * $ tree mount
+ * 
+ * mount/
+ * ├── L
+ * │   └── sda
+ * └── W
+ *     └── sda
+ *
+ * See how the entire virtual hard disks are available via the names
+ * 'sda', a common Unix/Linux style of naming for 'first hard drive'.
+ * Any VM with a second disk would show up with an 'sdb' disk
+ * alongside 'sda'.
+ *
+ * Even better, if any VM had been Snapshotted and we invoke Main with
+ * the -s option, the content of all disks at <em>all</em> snapshots
+ * are available.  The 'generation' of each Snapshot (starting at 1
+ * for oldest state of disk) is appended to the disk name, e.g.
+ *
+ * mount/
+ * ├── L
+ * │   └── sda
+ * └── W
+ *     └── sda1
+ *     └── sda2
+ *
+ * NOTE: This numbering addresses content over <em>time</em> (e.g. at
+ * Snapshot times).  This numbering does <b>not</b> address partitions
+ * of a disk (e.g. /dev/sda1).  This VMFS exposes only whole
+ * virtual disks, not partitions within disks.  This suffices, since
+ * volume system traversal (and hence partition location) is done by
+ * host tools anyway (like Sleuthkit's mmls).
+ *
+ * You could now use filesystem tools on the host (e.g. Sleuthkit) to
+ * walk the state of the disk at each snapshotted moment in time. To
+ * compare the volume system over time:
+ *
+ * $ mmls mount/W/sda1
+ * $ mmls mount/W/sda2
+ *
+ * Finally, Snapshots are supported also when a VM has many disks.  A
+ * sample VM W with 2 hard disks, both in place when a first/only
+ * Snapshot taken would produce this vmfs:
+ *
+ * mount/
+ * └── W
+ *     └── sda1
+ *     └── sda2
+ *     └── sdb1
+ *     └── sdb2
+ *
+ *
  * Once the mount point is active, to unmount, run fusermount in a
- *  separate terminal, e.g.
+ * separate terminal, e.g.
  *
  * $ fusermount -u /path/to/mountPoint
  *
- *
  * @see VirtualMachineFileSystem
- */
-
+ */ 
+ 
  /*
    LOOK: Make the actual fuse mount multi-threaded, needs some work in
    VirtualMachineFileSystem.  Currently we are forcing a
