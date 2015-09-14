@@ -33,8 +33,10 @@ public class NormalDisk extends DynamicDisk {
 		super( f, h );
 
 		/*
-		  maintain random and zero blocks as an optimisation for all
-		  reads which hit such a block
+		  Maintain random and zero blocks as an optimisation for all
+		  reads which hit such a block.  From experience, we use the
+		  fact that most times VirtualBox builds .vdi files with a
+		  block size of 1MB.
 		*/
 		if( header.blockSize() == 1024*1024 ) {
 			randomBlock = RANDOMBLOCK_20;
@@ -54,9 +56,10 @@ public class NormalDisk extends DynamicDisk {
 	}
 	
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
 		readBlockMap();
-		return new NormalDiskRandomAccess( true );
+		return new NormalDiskRandomAccess( writable );
 	}
 
 	class NormalDiskRandomAccess extends RandomAccessVirtualDisk {
@@ -65,7 +68,12 @@ public class NormalDisk extends DynamicDisk {
 			String mode = writable ? "rw" : "r";
 			raf = new RandomAccessFile( source, mode );
 			dPos();
-
+			/*
+			  A local buffer for one whole block of data.  We always
+			  read one block from the underlying content, even if if
+			  the caller requests fewer.  Acts as a sort of 'readahead
+			  buffer'
+			*/
 			block = new byte[(int)header.blockSize()];
 			bmePrev = -1;
 		}
@@ -86,14 +94,15 @@ public class NormalDisk extends DynamicDisk {
 		   For the array read, we shall attempt to satisy the length
 		   requested, even if it is takes us many reads (of the
 		   physical file) from different blocks to do so.  While the
-		   contract for InputStream is that any read CAN return < len
-		   bytes, for InputStreams backed by file data, users probably
-		   expect len bytes back (fewer of course if eof).
+		   contract for InputStream is that any read <em>can</em>
+		   return < len bytes, for InputStreams backed by file data,
+		   users probably expect len bytes back (fewer of course if
+		   eof).
 
 		   Further, when using this class with our
-		   VirtualDiskFS/Fuse4j/fuse system to expose the vdi to
+		   VirtualMachineFS/Fuse4j/fuse system to expose the vdi to
 		   fuse, fuse states that the callback read operation is
-		   REQUIRED to return len bytes if they are available
+		   <b>required</b> to return len bytes if they are available
 		   (i.e. not read past eof)
 		*/
 		   
@@ -169,6 +178,7 @@ public class NormalDisk extends DynamicDisk {
 			dPos();
 		}
 
+		// LOOK: Our .vdi writes not yet well-tested.  
 		@Override
 		public void writeImpl( byte[] ba, int off, int len )
 			throws IOException {
@@ -217,7 +227,8 @@ public class NormalDisk extends DynamicDisk {
 		}
 		
 		/**
-		 * Called whenever the local posn changes value.
+		 * Called whenever the local posn changes value, which it will
+		 * via any number of operations: read,write,skip,seek.
 		 */
 		private void dPos() {
 
@@ -235,6 +246,16 @@ public class NormalDisk extends DynamicDisk {
 				return;
 
 			long imageOffset = posn;
+
+			/*
+			  Note: we sought to optimize the divide and mod
+			  operations, knowing that blockSize very likely
+			  a power of two, so divide could become right-shift
+			  and mod could become bitwise-AND.
+
+			  The 'optimization' saved. ohh,  microseconds, not worth the
+			  hassle of increased code complexity!
+			*/
 			bIndex = (int)(imageOffset / header.blockSize());
 			bOffset = (int)(imageOffset % header.blockSize());
 
@@ -251,7 +272,6 @@ public class NormalDisk extends DynamicDisk {
 		private int bmePrev;
 	}
 	
-
 	private final byte[] randomBlock;
 	private final byte[] zeroBlock;
 	
@@ -259,7 +279,7 @@ public class NormalDisk extends DynamicDisk {
 	 * Block marked as free is not allocated in image file, read from
 	 * this block may return any random data (?? surely zeros ?? What
 	 * would a real new disk have on it before any file system
-	 * placement??  )
+	 * placement?? )
 	 */
 	//	#define VDI_IMAGE_BLOCK_FREE   ((VDIIMAGEBLOCKPOINTER)~0)
 
@@ -269,7 +289,7 @@ public class NormalDisk extends DynamicDisk {
 	 */
 	//	#define VDI_IMAGE_BLOCK_ZERO   ((VDIIMAGEBLOCKPOINTER)~1)
 	
-	// random. Well, 0 is random!
+	// random?? Well, 0 is random!
 	static private final int RANDOM = 0;
 	
 	/*

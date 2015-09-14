@@ -13,6 +13,9 @@ import org.apache.commons.io.EndianUtils;
 /**
  * @author Stuart Maclean
  *
+ * Parse the headers that appear at the head of all VirtualBox .vdi
+ * files.
+ *
  */
  public class VDIHeaders {
 
@@ -28,6 +31,11 @@ import org.apache.commons.io.EndianUtils;
 		case 1: 
 			result = new Header1( raf );
 			break;
+
+		default:
+			throw new IllegalStateException( "Unknown major version " +
+											 ph.versionMajor() + " in " + f );
+			
 		}
 		return result;
 	}
@@ -42,8 +50,11 @@ import org.apache.commons.io.EndianUtils;
 			di.readFully( ba );
 			sig = EndianUtils.readSwappedUnsignedInteger( ba, 64 );
 			if( sig != VDI_IMAGE_SIGNATURE )
-				throw new VDIMissingSignatureException
-					( "VDI Signature missing" );
+				/*
+				  LOOK: really want to know the source file exhibiting
+				  the error
+				*/
+				throw new VDIMissingSignatureException();
 			version = EndianUtils.readSwappedUnsignedInteger( ba, 68 );
 		}
 
@@ -69,7 +80,6 @@ import org.apache.commons.io.EndianUtils;
 		
 		/** Image signature. */
 		//		#define VDI_IMAGE_SIGNATURE   (0xbeda107f)
-
 		static public final long VDI_IMAGE_SIGNATURE  = 0xbeda107fL;
 	}
 
@@ -77,6 +87,7 @@ import org.apache.commons.io.EndianUtils;
 		public Header1( DataInput di ) throws IOException {
 			byte[] ba = new byte[4];
 			di.readFully( ba );
+
 			// cbHeader...
 			long sizeof = EndianUtils.readSwappedUnsignedInteger( ba, 0 );
 			//			logger.debug( "VH1 sizeof " + sizeof );
@@ -126,8 +137,6 @@ import org.apache.commons.io.EndianUtils;
 
 			uuidCreate = readFrom( ba, 316 );
 			uuidLinkage = readFrom( ba, 316+32 );
-			
-			
 		}
 
 		static private UUID readFrom( byte[] ba, int offset ) {
@@ -206,7 +215,12 @@ import org.apache.commons.io.EndianUtils;
 			return sw.toString();
 		}
 		
-		// all these are defined as uint32_t in VDICore, so need longs here..
+		/*
+		  All these are defined as uint32_t in VDICore, so need longs here
+		  in case the top-bit were ever set.  That top-bit may well be
+		  unsigned in C but it can't be in Java, and we would have negative
+		  values, a disaster.
+		*/
 		long type;
 		long blocksOffset, dataOffset, diskSize;
 		long blockSize;

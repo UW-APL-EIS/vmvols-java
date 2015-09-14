@@ -12,16 +12,20 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 
 
 /**
+ * @author Stuart Maclean
+ *
    From VDICore.h...
 
    Dynamically growing image file for differencing support.
    VDI_IMAGE_TYPE_DIFF,
 
    A DifferenceDisk must have an attached parent (which can be any of
-   NormalDisk,FixedDisk or another DifferenceDisk).  Where the
+   NormalDisk, FixedDisk or another DifferenceDisk).  Where the
    BlockMap in a DifferenceDisk shows a 'missing block', we refer to
    the parent disk for data for that block.
 
+   @see DynamicDisk
+   @see VDIDisk
 */
 
 public class DifferenceDisk extends DynamicDisk {
@@ -29,67 +33,6 @@ public class DifferenceDisk extends DynamicDisk {
 	protected DifferenceDisk( File f, VDIHeader h ) {
 		super( f, h );
 	}
-
-	/**
-	   An incorrect parent disk attachment would cause mayhem ;) So we
-	   check the linkage before accepting the parent.  Likely that
-	   this parent attachment is not done 'by hand', but you never
-	   know...
-	*/
-	void setParent( VDIDisk d ) {
-		/*
-		String linkage = null;//header.imageParentUUID();
-		if( !linkage.equals( d.header.imageCreationUUID() ) ) {
-			throw new IllegalArgumentException
-				( "Linkage mismatch setting parent " + source + "," +
-				  d.getPath() );
-		}
-		parent = d;
-		*/
-	}
-
-	// not checking parent here, just return what we have...
-	/*
-	  VDIDisk getParent() {
-		return parent;
-	}
-	*/
-
-	/*
-	@Override
-	public int getGeneration() {
-		checkParent();
-		return 1 + parent.getGeneration();
-	}
-	
-	@Override
-	public VirtualDisk getGeneration( int i ) {
-		int g = getGeneration();
-		if( g == i )
-			return this;
-		if( g > i ) {
-			checkParent();
-			return parent.getGeneration( i );
-		}
-		if( child != null )
-			return child.getGeneration( i );
-		throw new IllegalStateException( "DifferenceDisk.getGeneration query "
-										 + i);
-	}
-	*/
-	
-	/*
-	@Override
-	public List<? extends VirtualDisk> getAncestors() {
-		List<VDIDisk> result = new ArrayList<VDIDisk>();
-		int g = getGeneration();
-		for( int i = 0; i < g; i++ ) {
-			VDIDisk vd = (VDIDisk)getGeneration(i);
-			result.add( vd );
-		}
-		return result;
-	}
-	*/
 
 	@Override
 	public InputStream getInputStream() throws IOException {

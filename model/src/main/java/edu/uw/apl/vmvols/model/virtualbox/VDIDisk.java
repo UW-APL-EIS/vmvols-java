@@ -20,14 +20,22 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 import org.apache.commons.io.EndianUtils;
 
 /**
-   see also ./VDICore.h for reference and VBoxManage for the public api...
-*/
+ * @author Stuart Maclean
+ *
+ * Our VirtualBox classes are pure-Java, no JNI/C bridge to any
+ * underlying VirtualBox .so/.dlls.  We do all the file format parsing
+ * locally.
+ *
+ * See also our local copy of VDICore.h (copied from the VirtualBox
+ * codebase) for reference and VBoxManage for the public api...
+ */
+
 abstract public class VDIDisk extends VirtualDisk {
 
 	/**
 	  Note how we split the reading of a .vdi file into three
 	  'phases'.  At VD construction, we just read in the header (and
-	  its preceding preheader).  The header alone tells us about any
+	  its preceding pre-header).  The header alone tells us about any
 	  parent-child relationship between files.
 
 	  We also have a method to read in the blockmap, which is required
@@ -45,7 +53,18 @@ abstract public class VDIDisk extends VirtualDisk {
 	public VDIHeader getHeader() {
 		return header;
 	}
-	
+
+	/**
+	 * Our 'entry point' into .vdi file processing.  Reads the header
+	 * from a .vdi file and decides (from the type field) which type
+	 * of vdi disk this is:
+	 *
+	 * dynamic (created by Vbox to grow as data written to the virtual disk)
+	 *
+	 * fixed (created by Vbox with full capacity immediately)
+	 *
+	 * difference (used for generations 2+, a result of Snapshot operations)
+	 */
 	static public VDIDisk readFrom( File hostVDIFile ) throws IOException {
 		VDIHeader h = VDIHeaders.parse( hostVDIFile );
 		VDIDisk result = null;
@@ -60,26 +79,21 @@ abstract public class VDIDisk extends VirtualDisk {
 			result = new DifferenceDisk( hostVDIFile, h );
 			break;
 		default:
-			throw new VDIException( "Image type not supported: " + h.imageType() );
+			/*
+			  Other formats we can't decipher. A 'paused VM' has a host
+			  disk format we can't grok (boo!)
+			*/
+			throw new VDIException
+				( "Image type not supported: " + h.imageType() );
 		}
 		return result;
 	}
 
 	
-	// provide a hint to test apps as how to allocate their read buffers...
-	abstract long contiguousStorage();
-
-
 	/**
-	   An 'active' disk is that which VirtualBox would write to (and
-	   start the read process chain at) in a running VM.  For a base
-	   disk which has never been Snapshot'ed, the base is active.
-	   Else some child snapshot is active.
-	*/
-	@Override
-	public VirtualDisk getActive() {
-		return child == null ? this : child.getActive();
-	}
+	 * Provide a hint to test apps as how to allocate their read buffers...
+	 */
+	abstract long contiguousStorage();
 
 	@Override
 	public String getID() {
@@ -92,12 +106,6 @@ abstract public class VDIDisk extends VirtualDisk {
 		return header.diskSize();
 	}
 
-
-	//	@Override
-	public File getPathBase()  {
-		return null;//		return getBase().getPath();
-	}
-
 	@Override
 	public UUID getUUID() {
 		return header.imageCreationUUID();
@@ -108,7 +116,6 @@ abstract public class VDIDisk extends VirtualDisk {
 		return header.imageParentUUID();
 	}
 
-	
 	public int imageType() {
 		return (int)header.imageType();
 	}
@@ -124,11 +131,13 @@ abstract public class VDIDisk extends VirtualDisk {
 	public long dataOffset() {
 		return header.dataOffset();
 	}
-	
+
+	@Override
 	public int hashCode() {
 		return header.imageCreationUUID().hashCode();
 	}
 
+	@Override
 	public boolean equals( Object o ) {
 		if( this == o )
 			return true;
@@ -140,8 +149,9 @@ abstract public class VDIDisk extends VirtualDisk {
 	}
 
 	/**
-	   Various sanity checks that block map is consistent, and that
-	   the real data referenced by the block map is indeed available.
+	   Various sanity checks that the block map is consistent, and
+	   that the real data referenced by the block map is indeed
+	   available.
 
 	   We have seen VM disk corruptions, like when we used our fuse
 	   system while also having the VM powered up (and thus under VBox
@@ -154,8 +164,11 @@ abstract public class VDIDisk extends VirtualDisk {
 		long bs = blockSize();
 		Set<Integer> s = new HashSet<Integer>();
 		for( int bme : blockMap ) {
+
+			// The bme may 'point' to no data at all...
 			if( bme == VDI_IMAGE_BLOCK_FREE || bme == VDI_IMAGE_BLOCK_ZERO )
 				continue;
+			
 			// 1: the bme could point past eof of true file
 			long highestOffset = dto + bme * bs + bs;
 			if( highestOffset > fLength ) {
@@ -166,7 +179,7 @@ abstract public class VDIDisk extends VirtualDisk {
 			// 2: duplicate bme..
 			boolean isUnique = s.add( bme );
 			if( !isUnique ) {
-				System.err.println( s );
+				log.warn( s );
 				throw new VDIException
 					( "BlockMapEntry duplicate: " + bme +
 					  ". Corrupt vdi? " + getPath() );
@@ -175,7 +188,12 @@ abstract public class VDIDisk extends VirtualDisk {
 	}
 	
 	protected void readBlockMap() throws IOException {
-		// only need to read the block map at most once, it is invariant...
+		/*
+		  Only need to read the block map at most once, it is
+		  invariant.  On the rare occasions when we do write to the
+		  virtualdisk, we update the block map in both local memory
+		  and out to the file, so the two are always synchronized.
+		*/
 		if( blockMap != null )
 			return;
 		
@@ -185,11 +203,13 @@ abstract public class VDIDisk extends VirtualDisk {
 		raf.seek( header.blocksOffset() );
 		byte[] ba = new byte[4*N];
 		raf.readFully( ba );
+		raf.close();
+
+		// LOOK: We are assuming little-endian formats, seems to hold...
 		for( int i = 0; i < N; i++ ) {
 			blockMap[i] = (int)EndianUtils.readSwappedUnsignedInteger
 				( ba, 4*i );
 		}
-		raf.close();
 		checkBlockMap();
 	}
 
@@ -227,10 +247,7 @@ abstract public class VDIDisk extends VirtualDisk {
 	protected int[] blockMap;
 
 	protected final VDIHeader header;
-	
-	// child may be null
-	//	protected DifferenceDisk child;
-	
+		
 	static public final String FILESUFFIX = "vdi";
 
 	static public final FilenameFilter FILEFILTER = new FilenameFilter() {
@@ -238,7 +255,6 @@ abstract public class VDIDisk extends VirtualDisk {
 				return name.endsWith( FILESUFFIX );
 			}
 		};
-
 
 	static public final int VDI_IMAGE_TYPE_NORMAL = 1;
 	static public final int VDI_IMAGE_TYPE_FIXED = 2;
@@ -251,6 +267,5 @@ abstract public class VDIDisk extends VirtualDisk {
 	//	#define VDI_IMAGE_BLOCK_ZERO   ((VDIIMAGEBLOCKPOINTER)~1)
 	static public final int VDI_IMAGE_BLOCK_ZERO = ~1;
 }
-
 
 // eof

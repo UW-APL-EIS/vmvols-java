@@ -10,67 +10,50 @@ import java.util.List;
 
 import edu.uw.apl.vmvols.model.VirtualDisk;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
+import edu.uw.apl.vmvols.model.Utils;
 
 /**
-   Preallocated base image file of a fixed size.
-   VDI_IMAGE_TYPE_FIXED,
-*/
+ * @author Stuart Maclean
+ *
+ * Preallocated base image file of a fixed size.
+ * VDI_IMAGE_TYPE_FIXED,
+ */
 
 public class FixedDisk extends VDIDisk {
 
 	protected FixedDisk( File f, VDIHeader h ) {
 		super( f, h );
 	}
-
-	/*
-	  @Override
-	public int getGeneration() {
-		return 0;
-	}
-
-	@Override
-	public VirtualDisk getGeneration( int i ) {
-		if( i == 0 )
-			return this;
-		if( child != null )
-			return child.getGeneration( i );
-		throw new IllegalStateException( "FixedDisk.getGeneration query " + i);
-	}
-
-	@Override
-	public List<VirtualDisk> getAncestors() {
-		return Collections.emptyList();
-	}
-	*/
-	
 	
 	@Override
 	long contiguousStorage() {
 		return size();
 	}
 
-	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		// the entire embedded disk is located at dataOffset, contiguously
+		/*
+		  The entire embedded disk is located at dataOffset,
+		  contiguously.  Note how we do not even bother to load/read
+		  the block map.  For a FixedDisk, the blockmap is the
+		  identity, modulo the dataOffset
+		*/
 		FileInputStream fis = new FileInputStream( source );
-		long posn = 0;
-		while( posn < header.dataOffset() ) {
-			long skip = fis.skip( header.dataOffset() - posn );
-			posn += skip;
-		}
+		Utils.skipFully( fis, header.dataOffset() );
 		return fis;
 	}
 
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
-		return new FixedDiskRandomAccess();
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
+		return new FixedDiskRandomAccess( writable );
 	}
 
 	class FixedDiskRandomAccess extends RandomAccessVirtualDisk {
-		FixedDiskRandomAccess() throws IOException {
+		FixedDiskRandomAccess( boolean writable ) throws IOException {
 			super( size() );
-			raf = new RandomAccessFile( source, "rw" );
+			String mode = writable ? "rw" : "r";
+			raf = new RandomAccessFile( source, mode );
 			raf.seek( header.dataOffset() );
 		}
 
@@ -81,6 +64,10 @@ public class FixedDisk extends VDIDisk {
 
 		@Override
 		public void seek( long s ) throws IOException {
+			/*
+			  According to java.io.RandomAccessFile, no restriction on
+			  seek.  That is, seek posn can be -ve or past eof
+			*/
 			raf.seek( header.dataOffset() + s );
 			posn = s;
 		}
@@ -90,14 +77,15 @@ public class FixedDisk extends VDIDisk {
 		   For the array read, we shall attempt to satisy the length
 		   requested, even if it is takes us many reads (of the
 		   physical file) from different blocks to do so.  While the
-		   contract for InputStream is that any read CAN return < len
-		   bytes, for InputStreams backed by file data, users probably
-		   expect len bytes back (fewer of course if eof).
+		   contract for InputStream asserts that any read <em>can</em>
+		   return < len bytes, for InputStreams backed by file data,
+		   users probably expect len bytes back (fewer of course if
+		   eof).
 
 		   Further, when using this class with our
-		   VirtualDiskFS/Fuse4j/fuse system to expose the vdi to
+		   VirtualMachineFS/Fuse4j/fuse system to expose the vdi to
 		   fuse, fuse states that the callback read operation is
-		   REQUIRED to return len bytes if they are available
+		   <b>required</b> to return len bytes if they are available
 		   (i.e. not read past eof)
 		*/
 		   
@@ -130,7 +118,10 @@ public class FixedDisk extends VDIDisk {
 		   requested, even if it is takes us many writes (of the
 		   physical file) from different blocks to do so.
 
-		   LOOK: then why have we only one write ???
+		   LOOK: then why have we only one write ???  THIS NEEDS
+		   FINISHING if/when we ever get serious about supported
+		   virtual disk writes.  For our forensics-oriented interests,
+		   read access is all we need.
 		*/
 		   
 		@Override

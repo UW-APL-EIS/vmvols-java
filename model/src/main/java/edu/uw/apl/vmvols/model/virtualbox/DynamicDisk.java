@@ -3,6 +3,8 @@ package edu.uw.apl.vmvols.model.virtualbox;
 import java.io.File;
 
 /**
+ * @author Stuart Maclean
+ *
  * Superclass for NormalDisk and DifferenceDisk, which make use of the
  * BlockMap structure.  This class just maintains the BlockMap, making
  * it available to NormalDisk, DifferenceDisk.

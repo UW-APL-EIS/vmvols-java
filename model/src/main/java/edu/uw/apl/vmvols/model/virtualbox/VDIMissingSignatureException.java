@@ -1,5 +1,9 @@
 package edu.uw.apl.vmvols.model.virtualbox;
 
+/**
+ * @author Stuart Maclean
+ */
+
 public class VDIMissingSignatureException extends VDIException {
 
 	public VDIMissingSignatureException() {

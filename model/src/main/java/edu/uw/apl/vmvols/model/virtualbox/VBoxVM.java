@@ -26,12 +26,21 @@ import edu.uw.apl.vmvols.model.vmware.VMDKException;
  *
  * To locate the virtual disk(s) in a VirtualBox vm directory, do this:
  *
- * File theDir = ....
- * boolean b = VBoxVM.isVBox( theDir );
- * if( b ) {
- *   VBoxVM vm = new VBoxVM( theDir );
- *   List<VirtualDisk> disks = vm.getActiveDisks();
- * }
+ <code>
+ File theDir = ....
+ boolean b = VBoxVM.isVBox( theDir );
+ if( b ) {
+  VBoxVM vm = new VBoxVM( theDir );
+  List<VirtualDisk> disks = vm.getActiveDisks();
+ }
+ </code>
+ 
+ * Alternatively, and better, is the VM-agnostic api:
+ *
+ <code>
+ VirtualMachine vm = VirtualMachine.create( theDir );
+ List<VirtualDisk> disks = vm.getActiveDisks();
+ </code>
  *
  * An 'active' disk is one which would be written to were the VM to be
  * running.  It is the 'current snapshot'.  This API also supports

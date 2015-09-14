@@ -19,6 +19,54 @@ import org.apache.commons.logging.LogFactory;
  * with a .vdi suffix) and one for VMWare disks (contained normally in
  * a file with a .vmdk suffix).
  *
+ * VM engines often support 'Snapshotting' of virtual machines.
+ * VirtualBox and VMware do.  Snapshotting freezes VM content,
+ * including disk content, in time.  We understand these snapshot
+ * features and expose them as 'generations' of a virtual disk.
+ * Generation 1 is the disk when created.  We call this the
+ * <em>base</em> disk, and it corresponds to the .vdi/.vmdk file
+ * created by the VM engine when the disk is first created.
+ * Generation 2 would be the disk once one snapshot had be taken, etc.
+ * The <em>active>/em> disk is the one with the highest generation
+ * number, and it corresponds to the version of the disk that would be
+ * read/written were the VM to be powered up.
+ *
+ * Note how generationing applies to each virtual disk and
+ * <em>not</em> each virtual machine.  Imagine this sequence of events:
+ *
+ * VM created, with a single virtual hard drive (disk).  This is our
+ * base disk.
+ *
+ * Later, snapshot of the VM taken, the single disk has its content
+ * frozen.  No further writes go to this version of the disk.  VM
+ * creates a new file to which further writes are done.  The new file
+ * represents generation 2 of the disk, the original disk is still
+ * generation 1.
+ *
+ * Later, a second hard drive added to the VM.  It is again a base
+ * disk, and has generation 1, not 2.
+ *
+ * Later, a second snapshot of the VM taken.  Our first hard drive now
+ * has 3 generations, and our second disk has two generations.
+ *
+ * After the second snapshot, the active disks are generation 3 for
+ * first disk and generation 2 for second disk.  The base disks are
+ * generation 1 for both disks.  Our VM api supports access to
+ *
+ * activeDisks
+ * baseDisks
+ * identified generations
+ *
+ * The basic API for accessing the data of virtual disk is very small, just
+ *
+ * getInputStream
+ * getRandomAccess
+ *
+ * Combined with our 'fuse' module these are however enough to provide
+ * complete access to whole disk data at the host system call level,
+ * i.e. by tools like Sleuthkit.  In fact just getRandomAccess
+ * suffices.
+ *
  * For more info on virtual disk snapshotting, and how it leads to a
  * hierarchy of disks in a parent/child tree, see e.g.
  *
@@ -79,13 +127,30 @@ abstract public class VirtualDisk {
 	 */
 	abstract public long size();
 
+	/**
+	 * VMs always label their virtual disks with a UUID, and use it
+	 * for identifying/maintaining parent-child content relationships
+	 * across snapshots.  We expose this feature too.  It is really
+	 * only used to again identify disk generations.
+	 */
 	abstract public UUID getUUID();
 
 	abstract public UUID getUUIDParent();
-	
+
+	/**
+	 * @return The familiar java.io.InputStream, so whole disk content
+	 * can be read in a 'forward-only' fashion.  More useful is
+	 * getRandomAccess, which then supports seekable access (and
+	 * writes!)
+	 */
 	abstract public InputStream getInputStream() throws IOException;
 
-	abstract public RandomAccessVirtualDisk getRandomAccess()
+	/**
+	 * @return Our local RandomAccessVirtualDisk which partially mimics
+	 * java.io.RandomAccessFile, given read,write and seekable access to
+	 * the virtual disk content.
+	 */
+	abstract public RandomAccessVirtualDisk getRandomAccess( boolean writeable )
 		throws IOException;
 
 	/**
@@ -115,9 +180,9 @@ abstract public class VirtualDisk {
 	}
 
 	/**
-	 * @return The disk in the parent-child disk tree which is the
-	 * 'live' disk and would be read/written were the VM containing
-	 * that disk to be powered on.
+	 * @return The disk in the parent-child disk tree which includes
+	 * this disk and which is the 'live' disk and would be
+	 * read/written were the VM containing that disk to be powered on.
 	 */
 	public VirtualDisk getActive() {
 		if( child == null )
@@ -152,7 +217,8 @@ abstract public class VirtualDisk {
 	/**
 	 * @return All the ancestors of this disk, i.e. all parents,
 	 * across all snapshots, recursively.  Empty if no snapshots ever
-	 * taken, or this disk the first created in a snapshot family.
+	 * taken, or this disk the first created in a snapshot family,
+	 * i.e. is a base disk.
 	 */
 	public List<VirtualDisk> getAncestors() {
 		List<VirtualDisk> result = new ArrayList<VirtualDisk>();
@@ -173,7 +239,6 @@ abstract public class VirtualDisk {
 	protected final Log log;
 
 	static public final UUID NULLUUID = new UUID( 0L, 0L );
-
 }
 
 // eof
