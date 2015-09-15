@@ -43,7 +43,7 @@ public class MD5Test extends junit.framework.TestCase {
 	
 	void testRandomAccessVolume( VDIDisk d, int blockSize ) throws IOException {
 		long start = System.currentTimeMillis();
-		RandomAccessVirtualDisk rav = d.getRandomAccess();
+		RandomAccessVirtualDisk rav = d.getRandomAccess( false );
 		String s = Utils.md5sum( rav, blockSize );
 		System.out.println( d.getPath() + " " + blockSize + " " + s );
 		rav.close();
@@ -63,7 +63,7 @@ public class MD5Test extends junit.framework.TestCase {
 	void testSeekRandomAccessVolume( VDIDisk d, int blockSize )
 		throws IOException {
 		long start = System.currentTimeMillis();
-		RandomAccessVirtualDisk rav = d.getRandomAccess();
+		RandomAccessVirtualDisk rav = d.getRandomAccess( false );
 
 		MessageDigest md5 = null;
 		try {

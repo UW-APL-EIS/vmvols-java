@@ -8,15 +8,26 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import edu.uw.apl.vmvols.model.VirtualDisk;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 import edu.uw.apl.vmvols.model.Utils;
 
 /**
  * @author Stuart Maclean
  *
- * Preallocated base image file of a fixed size.
- * VDI_IMAGE_TYPE_FIXED,
+ * Preallocated base image file of a fixed size.  In VirtualBox C
+ * code, this is type VDI_IMAGE_TYPE_FIXED.
+ *
+ * Although a FixedDisk still has a 'block map' near the head of the
+ * host disk file, the block map is essentially a no-op, or perhaps
+ * better thought of an identity function.  All the space for the
+ * virtual disk's entire content is pre-allocated in the host file, so
+ * no block map indirection is needed.  A FixedDisk disk size is then
+ * the size of the virtual disk plus any leading data structures like
+ * the header and block map.  In fact:
+ *
+ * host disk file size = virtual disk size + header.dataOffset.
+ *
+ * @see FixedDiskTest for unit tests on FixedDisk data files.
  */
 
 public class FixedDisk extends VDIDisk {
@@ -30,13 +41,16 @@ public class FixedDisk extends VDIDisk {
 		return size();
 	}
 
-	@Override
+	@Override 
 	public InputStream getInputStream() throws IOException {
 		/*
-		  The entire embedded disk is located at dataOffset,
-		  contiguously.  Note how we do not even bother to load/read
-		  the block map.  For a FixedDisk, the blockmap is the
-		  identity, modulo the dataOffset
+		  The entire embedded disk is located at dataOffset in the
+		  host file, contiguously.  So we do not even bother to
+		  load/read the block map.  For a FixedDisk, the blockmap is
+		  the identity, modulo the dataOffset.  We just open the host
+		  file and wind forward to dataOffset, after which point the
+		  (File)InputStream is handed back to the caller for all
+		  subsequent operations.
 		*/
 		FileInputStream fis = new FileInputStream( source );
 		Utils.skipFully( fis, header.dataOffset() );
@@ -66,7 +80,7 @@ public class FixedDisk extends VDIDisk {
 		public void seek( long s ) throws IOException {
 			/*
 			  According to java.io.RandomAccessFile, no restriction on
-			  seek.  That is, seek posn can be -ve or past eof
+			  seek.  That is, seek posn can be -ve or past eof!
 			*/
 			raf.seek( header.dataOffset() + s );
 			posn = s;
@@ -76,11 +90,10 @@ public class FixedDisk extends VDIDisk {
 		/**
 		   For the array read, we shall attempt to satisy the length
 		   requested, even if it is takes us many reads (of the
-		   physical file) from different blocks to do so.  While the
-		   contract for InputStream asserts that any read <em>can</em>
-		   return < len bytes, for InputStreams backed by file data,
-		   users probably expect len bytes back (fewer of course if
-		   eof).
+		   physical file) to do so.  While the contract for
+		   InputStream asserts that any read <em>can</em> return < len
+		   bytes, for InputStreams backed by file data, users probably
+		   expect len bytes back (fewer of course if eof).
 
 		   Further, when using this class with our
 		   VirtualMachineFS/Fuse4j/fuse system to expose the vdi to
@@ -102,7 +115,7 @@ public class FixedDisk extends VDIDisk {
 			//logger.debug( "Actual " + actualL + " " + actual );
 			int total = 0;
 			while( total < actual ) {
-				int nin = raf.read( ba, off+total, len-total );
+				int nin = raf.read( ba, off+total, actual-total );
 				if( log.isDebugEnabled() ) {
 					log.debug( getGeneration() + ".read " + posn  +
 							   " = " + nin );

@@ -22,6 +22,9 @@ import org.apache.commons.io.EndianUtils;
 /**
  * @author Stuart Maclean
  *
+ * Abstract base class capturing commonalities of the three variants
+ * of VirtualBox .vdi files: NormalDisk, FixedDisk, DifferenceDisk.
+ 
  * Our VirtualBox classes are pure-Java, no JNI/C bridge to any
  * underlying VirtualBox .so/.dlls.  We do all the file format parsing
  * locally.
@@ -88,7 +91,6 @@ abstract public class VDIDisk extends VirtualDisk {
 		}
 		return result;
 	}
-
 	
 	/**
 	 * Provide a hint to test apps as how to allocate their read buffers...
@@ -96,6 +98,10 @@ abstract public class VDIDisk extends VirtualDisk {
 	abstract long contiguousStorage();
 
 	@Override
+	/**
+	 * @return a name/id for this virtual disk, with a leading indicator that
+	 * this is a VBox/.vdi file (since VMware also uses UUIDs)
+	 */
 	public String getID() {
 		VirtualDisk base = getBase();
 		return "VDI-" + base.getUUID();
@@ -257,14 +263,14 @@ abstract public class VDIDisk extends VirtualDisk {
 		};
 
 	static public final int VDI_IMAGE_TYPE_NORMAL = 1;
-	static public final int VDI_IMAGE_TYPE_FIXED = 2;
-	static public final int VDI_IMAGE_TYPE_DIFF = 4;
+	static public final int VDI_IMAGE_TYPE_FIXED  = 2;
+	static public final int VDI_IMAGE_TYPE_DIFF   = 4;
 
 
-	//	#define VDI_IMAGE_BLOCK_FREE   ((VDIIMAGEBLOCKPOINTER)~0)
+	// #define VDI_IMAGE_BLOCK_FREE   ((VDIIMAGEBLOCKPOINTER)~0)
 	static public final int VDI_IMAGE_BLOCK_FREE = ~0;
 
-	//	#define VDI_IMAGE_BLOCK_ZERO   ((VDIIMAGEBLOCKPOINTER)~1)
+	// #define VDI_IMAGE_BLOCK_ZERO   ((VDIIMAGEBLOCKPOINTER)~1)
 	static public final int VDI_IMAGE_BLOCK_ZERO = ~1;
 }
 

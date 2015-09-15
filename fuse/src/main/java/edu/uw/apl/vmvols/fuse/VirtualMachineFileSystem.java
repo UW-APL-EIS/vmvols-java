@@ -340,7 +340,8 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			return Errno.ENOENT;
 
 		try {
-			RandomAccessVirtualDisk ravd = vd.getRandomAccess();
+			boolean writable = !readOnly;
+			RandomAccessVirtualDisk ravd = vd.getRandomAccess( writable );
 			if( log.isInfoEnabled() )
 				log.info( path + ": fh = " + ravd );
 			openSetter.setFh( ravd );
@@ -385,6 +386,7 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 				}
 				nin = ravd.read( ba, 0, buf.remaining() );
 			} else {
+				// Older code, did not cache any byte[]...
 				ba = new byte[buf.remaining()];
 				nin = ravd.read( ba );
 			}
@@ -399,7 +401,7 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 				// need this??  does this tells fuse we are at eof???
 				buf.put( ba, 0, 0 );
 			/*
-			  the fuse4j api says we return 0, NOT the byte count written
+			  The fuse4j api says we return 0, NOT the byte count written
 			  to the ByteBuffer
 			*/
 			return 0;
@@ -408,11 +410,10 @@ public class VirtualMachineFileSystem extends AbstractFilesystem3 {
 			log.warn( path + " " + offset + " " + buf.remaining() );
 			throw new FuseException( e );
 		}
-		
 	}
 
 	// fh is filehandle passed from open,
-   // isWritepage indicates that write was caused by a writepage
+	// isWritepage indicates that write was caused by a writepage
 	@Override
 	public int write(String path, Object fh, boolean isWritepage,
 					 ByteBuffer buf, long offset) throws FuseException {
