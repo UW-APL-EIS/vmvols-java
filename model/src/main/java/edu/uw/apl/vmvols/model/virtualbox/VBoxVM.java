@@ -57,7 +57,7 @@ import edu.uw.apl.vmvols.model.vmware.VMDKException;
  */
 public class VBoxVM extends VirtualMachine {
 
-	static public boolean isVBox( File dir ) {
+	static public boolean isVBoxVM( File dir ) {
 		if( !dir.isDirectory() )
 			return false;
 		File[] fs = dir.listFiles( VBOXFILE );
@@ -72,104 +72,52 @@ public class VBoxVM extends VirtualMachine {
 	 * have been passed to isVBoxVM prior to this call
 	 */
 	public VBoxVM( File f ) throws IOException {
+		if( !isVBoxVM( f ) )
+			throw new IllegalArgumentException
+				( "Not a VirtualBox VM directory: " + f );
+		dir = f;
 		baseDisks = new ArrayList<VirtualDisk>();
 		log = LogFactory.getLog( getClass() );
 		List<VirtualDisk> children = new ArrayList<VirtualDisk>();
-		if( f.isDirectory() ) {
-			dir = f;
-
-			// A VBox VM can manage .vdi disks...
-			Collection<File> fs = FileUtils.listFiles
-				( dir, new String[] { VDIDisk.FILESUFFIX }, true );
-			for( File el : fs ) {
-				VDIDisk vdi = null;
-				try {
-					vdi = VDIDisk.readFrom( el );
-				} catch( VDIException e ) {
-					continue;
-				}
-				if( vdi == null )
-					continue;
-				if( vdi.getUUIDParent().equals( VirtualDisk.NULLUUID ) )
-					baseDisks.add( vdi );
-				else
-					children.add( vdi );
+		
+		// A VBox VM can manage .vdi disks...
+		Collection<File> fs = FileUtils.listFiles
+			( dir, new String[] { VDIDisk.FILESUFFIX }, true );
+		for( File el : fs ) {
+			VDIDisk vdi = null;
+			try {
+				vdi = VDIDisk.readFrom( el );
+			} catch( VDIException e ) {
+				// LOOK: log e ??
+				continue;
 			}
-			
-			// A VBox VM can also manage VMware .vmdk disks...
-			fs = FileUtils.listFiles
-				( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
-			for( File el : fs ) {
-				VMDKDisk vmdk = null;
-				try {
-					vmdk = VMDKDisk.readFrom( el );
-				} catch( VMDKException e ) {
-					continue;
-				}
-				if( vmdk == null )
-					continue;
-				if( vmdk.getUUIDParent().equals( VirtualDisk.NULLUUID ) )
-					baseDisks.add( vmdk );
-				else
-					children.add( vmdk );
-			}
-			
-		} else {
-			/*
-			  When the supplied file is a single vd file and not
-			  a vbox vm dir, we add JUST the supplied file to the basedisks.
-			  We do NOT try to locate any other disks that are also owned
-			  by the same VM.
-			  
-			  We still derive the children the single disk may have,
-			  since it must be linked so we can access its active disk.
-			*/
-			
-			dir = f.getParentFile();
-
-			// A VBox VM can manage .vdi disks...
-			Collection<File> fs = FileUtils.listFiles
-				( dir, new String[] { VDIDisk.FILESUFFIX }, true );
-			for( File el : fs ) {
-				VDIDisk vdi = null;
-				try {
-					vdi = VDIDisk.readFrom( el );
-				} catch( VDIException e ) {
-					continue;
-				}
-				if( vdi == null )
-					continue;
-				if( el.equals( f ) ) {
-					baseDisks.add( vdi );
-				} else {
-					if( !vdi.getUUIDParent().equals( VirtualDisk.NULLUUID ) ) {
-						children.add( vdi );
-					}
-				}
-			}
-
-			
-			// A VBox VM can also manage VMware .vmdk disks...
-			fs = FileUtils.listFiles
-				( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
-			for( File el : fs ) {
-				VMDKDisk vmdk = null;
-				try {
-					vmdk = VMDKDisk.readFrom( el );
-				} catch( VMDKException e ) {
-					continue;
-				}
-				if( vmdk == null )
-					continue;
-				if( el.equals( f ) ) {
-					baseDisks.add( vmdk );
-				} else {
-					if( !vmdk.getUUIDParent().equals( VirtualDisk.NULLUUID ) )
-						children.add( vmdk );
-				}
-			}
+			if( vdi == null )
+				continue;
+			if( vdi.getUUIDParent().equals( VirtualDisk.NULLUUID ) )
+				baseDisks.add( vdi );
+			else
+				children.add( vdi );
 		}
-
+			
+		// A VBox VM can also manage VMware .vmdk disks...
+		fs = FileUtils.listFiles
+			( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
+		for( File el : fs ) {
+			VMDKDisk vmdk = null;
+			try {
+				vmdk = VMDKDisk.readFrom( el );
+			} catch( VMDKException e ) {
+				continue;
+			}
+			if( vmdk == null )
+				// LOOK: log e ??
+				continue;
+			if( vmdk.getUUIDParent().equals( VirtualDisk.NULLUUID ) )
+				baseDisks.add( vmdk );
+			else
+				children.add( vmdk );
+		}
+		
 		// Link base disks to child disks...
 		for( VirtualDisk d : baseDisks )
 			link( d, children );
@@ -186,7 +134,6 @@ public class VBoxVM extends VirtualMachine {
 		return baseDisks;
 	}
 
-	
 	// any active disks are derivable from their base disk counterpart...
 	@Override
 	public List<VirtualDisk> getActiveDisks() {

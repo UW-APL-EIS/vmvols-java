@@ -35,7 +35,7 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  * running.  It is the 'current snapshot'.  This API also supports
  * accessing any 'generation' (Snapshot) of any disk, all the way up
  * the 'base disk' (which has generation 1), which is held in the file
- * the VMWare app (Workstation?)  created when the VM was first built.
+ * the VMWare app (Workstation?) created when the VM was first built.
  * If a VM has never had a Snapshot taken, its active disk(s) and base
  * disk(s) are the same thing.
  *
@@ -43,18 +43,23 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  */
 public class VMwareVM extends VirtualMachine {
 
-	static public boolean isVMware( File dir ) {
+	static public boolean isVMwareVM( File dir ) {
 		if( !dir.isDirectory() )
 			return false;
 
-		// TODO: fill this in..
+		// TODO: fill this in. Need to research host-based VMware VM files..
 		return false;
 	}
 
-	public VMwareVM( File vmDir ) throws IOException {
+	public VMwareVM( File f ) throws IOException {
+		if( !isVMwareVM( f ) )
+			throw new IllegalArgumentException
+				( "Not a VMware VM directory: " + f );
+		dir = f;
 		baseDisks = new ArrayList<VirtualDisk>();
 		log = LogFactory.getLog( getClass() );
-		dir = vmDir;
+
+		// TODO, copy logic from VBox...
 	}
 
 	@Override

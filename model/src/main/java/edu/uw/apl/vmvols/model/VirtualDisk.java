@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
  * <em>base</em> disk, and it corresponds to the .vdi/.vmdk file
  * created by the VM engine when the disk is first created.
  * Generation 2 would be the disk once one snapshot had be taken, etc.
- * The <em>active>/em> disk is the one with the highest generation
+ * The <em>active</em> disk is the one with the highest generation
  * number, and it corresponds to the version of the disk that would be
  * read/written were the VM to be powered up.
  *
@@ -73,6 +73,88 @@ import org.apache.commons.logging.LogFactory;
  * http://searchvmware.techtarget.com/tip/How-VMware-snapshots-work
  */
 abstract public class VirtualDisk {
+
+	/**
+	 * When we care just about a single disk and not all the disks
+	 * associated with a full VM.  Allows user to skip use of
+	 * the VirtualMachine class altogether.
+	 *
+	 * Convenience class for the full create method, with caller
+	 * expecting/getting the active disk derived from the one
+	 * identified by f
+	 *
+	 * @param f a File on the host system identifying the
+	 * <em>base</em> disk of one of the hard disks in a VM.  By base,
+	 * we mean the first-created file representing a virtual disk, and
+	 * not any file representing a Snapshot delta.
+	 *
+	 * The parameter f can also identity a VM directory on the host
+	 * file system, but only if that VM has a single disk. Otherwise f
+	 * is ambiguous and an exact base virtual disk host file must be
+	 * supplied instead.
+	 */
+	static public VirtualDisk create( File f ) throws IOException {
+		return create( f, ACTIVE );
+	}
+
+	/**
+	 * @param f a File on the host system identifying the
+	 * <em>base</em> disk of one of the hard disks in a VM.  By base,
+	 * we mean the first-created file representing a virtual disk, and
+	 * not any file representing a Snapshot delta.
+	 *
+	 * The parameter f can also identity a VM directory on the host
+	 * file system, but only if that VM has a single disk. Otherwise f
+	 * is ambiguous and an exact base virtual disk host file must be
+	 * supplied instead.
+	 *
+	 * @param generation, where 1 is a base disk, or
+	 * VirtualDisk.ACTIVE for the active disk (so user need not
+	 * calculate the active disk's generation).
+	 */
+	static public VirtualDisk create( File f, int generation )
+		throws IOException {
+		
+		VirtualMachine vm = VirtualMachine.create( f );
+		if( vm == null )
+			throw new IllegalArgumentException( "Unknown host disk file: " +
+												f );
+
+		List<VirtualDisk> bases = vm.getBaseDisks();
+
+		if( f.isDirectory() ) {
+			if( bases.size() > 1 ) {
+				List<File> fs = new ArrayList<File>();
+				for( VirtualDisk vd : bases )
+					fs.add( vd.getPath() );
+				throw new IllegalArgumentException
+					( "Ambiguous request, VM dir " + f + " has " +
+					  fs.size() + " disks : " + fs );
+			}
+			VirtualDisk vd = bases.get(0);
+			return ( generation == ACTIVE ) ? vd.getActive() :
+				vd.getGeneration( generation );
+		}
+
+		VirtualDisk vd = null;
+		for( VirtualDisk base : bases ) {
+			if( base.getPath().equals( f ) ) {
+				vd = base;
+				break;
+			}
+		}
+		/*
+		  if vm != null, we should be able to locate the disk associated
+		  with f, so not locating it is a logic error
+		*/
+		if( vd == null )
+			throw new IllegalStateException
+				( "Cannot locate disk in VM built from " + f );
+
+		return ( generation == ACTIVE ) ? vd.getActive() :
+			vd.getGeneration( generation );
+	}
+
 	
 	protected VirtualDisk( File source ) {
 		this.source = source;
@@ -238,6 +320,9 @@ abstract public class VirtualDisk {
 	protected VirtualDisk parent, child;
 	protected final Log log;
 
+	static public final int ACTIVE = -1;
+	static public final int BASE = 1;
+	
 	static public final UUID NULLUUID = new UUID( 0L, 0L );
 }
 
