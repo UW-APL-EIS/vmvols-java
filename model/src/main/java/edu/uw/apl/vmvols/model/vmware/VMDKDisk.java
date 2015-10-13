@@ -26,7 +26,7 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
  *
  * Data and logic common to all VMWare virtual disks (or some at
  * least, not the VMFS ones!).  Hosted VMWare products, like
- * Workstation, Player, as well as VM biulder tool 'packer' all
+ * Workstation, Player, as well as VM builder tool 'packer' all
  * manipulate variants of these disks, which use the .vmdk file
  * suffix.
  *
@@ -97,6 +97,10 @@ abstract public class VMDKDisk extends VirtualDisk {
 			raf.close();
 			return new Descriptor( ba );
 		} catch( IllegalStateException ise ) {
+			/*
+			  No SparseExtentHeader at start of data, assume standalone
+			  descriptor file
+			*/
 			byte[] ba = FileUtils.readFileToByteArray( f );
 			return new Descriptor( ba );
 		}
