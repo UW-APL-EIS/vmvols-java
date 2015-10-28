@@ -9,6 +9,9 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/**
+ * @author Stuart Maclean
+ */
 /*
   VMDKFile metadata produced by vmvols tool 'vmdkinfo'.  Prints
   SparseExtentHeader and Descriptor info at head of any .vmdk file.

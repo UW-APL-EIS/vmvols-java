@@ -1,5 +1,9 @@
 package edu.uw.apl.vmvols.model.vmware;
 
+/**
+ * @author Stuart Maclean
+ */
+
 public class Constants {
 
 	// grainSize in sectors, NOT bytes...

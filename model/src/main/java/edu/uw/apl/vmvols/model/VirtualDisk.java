@@ -23,9 +23,12 @@ import org.apache.commons.logging.LogFactory;
  * VirtualBox and VMware do.  Snapshotting freezes VM content,
  * including disk content, in time.  We understand these snapshot
  * features and expose them as 'generations' of a virtual disk.
+ *
  * Generation 1 is the disk when created.  We call this the
  * <em>base</em> disk, and it corresponds to the .vdi/.vmdk file
- * created by the VM engine when the disk is first created.
+ * created by the VM engine when the disk is first created (including
+ * if imported from an OVF/OVA file).
+ *
  * Generation 2 would be the disk once one snapshot had be taken, etc.
  * The <em>active</em> disk is the one with the highest generation
  * number, and it corresponds to the version of the disk that would be
@@ -62,10 +65,24 @@ import org.apache.commons.logging.LogFactory;
  * getInputStream
  * getRandomAccess
  *
+ * Example usage:
+ *
+ <code>
+ // No generation, retrieves ACTIVE disk, highest generation
+ VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ) );
+
+ // Some identified generation...
+ VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ), 2 );
+
+ java.io.InputStream is = vd.getInputStream();
+
+ RandomAccessVirtualDisk ravd = vd.getRandomAccess();
+ </code>
+
  * Combined with our 'fuse' module these are however enough to provide
  * complete access to whole disk data at the host system call level,
- * i.e. by tools like Sleuthkit.  In fact just getRandomAccess
- * suffices.
+ * i.e. by tools like Sleuthkit.  In fact just RandomAccessVirtualDisk
+ * suffices in the fuse 'backend'.
  *
  * For more info on virtual disk snapshotting, and how it leads to a
  * hierarchy of disks in a parent/child tree, see e.g.
