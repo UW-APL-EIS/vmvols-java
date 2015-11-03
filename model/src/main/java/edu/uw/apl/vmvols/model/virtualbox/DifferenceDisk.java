@@ -44,11 +44,16 @@ public class DifferenceDisk extends DynamicDisk {
 	}
 
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
 		readBlockMap();
 		checkParent();
-		RandomAccessVirtualDisk parentRA = parent.getRandomAccess();
-		return new DifferenceDiskRandomAccess( parentRA, true );
+		/*
+		  By definition, any non-active disk cannot be writable,
+		  and a parent of this disk cannot be active.
+		*/
+		RandomAccessVirtualDisk parentRA = parent.getRandomAccess( false );
+		return new DifferenceDiskRandomAccess( parentRA, writable );
 	}
 
 	private void checkParent() {

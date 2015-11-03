@@ -24,12 +24,21 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  *
  * To locate the virtual disk(s) in a VMWare vm directory, do this:
  *
- * File theDir = ....
- * boolean b = VMwareVM.isVMware( theDir );
- * if( b ) {
- *   VMwareVM vm = new VMwareVM( theDir );
- *   List<VirtualDisk> disks = vm.getActiveDisks();
- * }
+ <code> 
+ File theDir = ....
+ boolean b = VMwareVM.isVMware( theDir );
+ if( b ) {
+  VMwareVM vm = new VMwareVM( theDir );
+  List<VirtualDisk> disks = vm.getActiveDisks();
+ }
+ </code>
+ *
+ * Alternatively, and better, is the VM-agnostic api:
+ *
+ <code>
+ VirtualMachine vm = VirtualMachine.create( theDir );
+ List<VirtualDisk> disks = vm.getActiveDisks();
+ </code>
  *
  * An 'active' disk is one which would be written to were the VM to be
  * running.  It is the 'current snapshot'.  This API also supports
@@ -47,7 +56,10 @@ public class VMwareVM extends VirtualMachine {
 		if( !dir.isDirectory() )
 			return false;
 
-		// TODO: fill this in. Need to research host-based VMware VM files..
+		File[] fs = dir.listFiles( VMXFILE );
+		// If we find a .vbox file we assert yes.
+		if( fs.length > 0 )
+			return true;
 		return false;
 	}
 
@@ -58,8 +70,31 @@ public class VMwareVM extends VirtualMachine {
 		dir = f;
 		baseDisks = new ArrayList<VirtualDisk>();
 		log = LogFactory.getLog( getClass() );
+		List<VMDKDisk> children = new ArrayList<VMDKDisk>();
 
-		// TODO, copy logic from VBox...
+		// A VMware VM can manage VMware .vmdk disks...
+		Collection<File> fs = FileUtils.listFiles
+			( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
+		for( File el : fs ) {
+			VMDKDisk vmdk = null;
+			try {
+				vmdk = VMDKDisk.readFrom( el );
+			} catch( VMDKException e ) {
+				log.warn( el + ": " + e );
+				continue;
+			}
+			if( vmdk == null )
+				// LOOK: log e ??
+				continue;
+			if( vmdk.getParentFileNameHint() == null )
+				baseDisks.add( vmdk );
+			else
+				children.add( vmdk );
+		}
+
+		// Link base disks to child disks...
+		for( VirtualDisk d : baseDisks )
+			link( d, children );
 	}
 
 	@Override
@@ -83,10 +118,62 @@ public class VMwareVM extends VirtualMachine {
 		return result;
 	}
 
+	/**
+	 * @param childDisks - All non-base disks found when identifying
+	 * all .vmdk files in a VMware directory.  Not necessarily true
+	 * that this baseDisk is the parent of any/all of the childDisks.
+	 * In fact, when called recursively (see recursive call), baseDisk
+	 * need not be a true baseDisk (generation=1) at all.
+	 */
+	private void link( VirtualDisk baseDisk,
+					   List<VMDKDisk> childDisks ) {
+		File linkage = baseDisk.getPath();
+		try {
+			linkage = linkage.getCanonicalFile();
+		} catch( IOException ioe ) {
+			log.warn( ioe );
+			// Any childDisks with baseDisk as parent will be orphaned!
+			return;
+		}
+		for( VMDKDisk vd : childDisks ) {
+			/*
+			  Due to recursive nature of the link process, the needle
+			  and haystack member could be same object.
+			*/
+			if( vd == baseDisk )
+				continue;
+			File pfnh = vd.getParentFileNameHint();
+			if( pfnh == null )
+				continue;
+			try {
+				pfnh = pfnh.getCanonicalFile();
+			} catch( IOException ioe ) {
+				log.warn( ioe );
+				// vd will be orphaned!
+				continue;
+			}
+			if( linkage.equals( pfnh ) ) {
+				baseDisk.setChild( vd );
+				// and recursively for the identified child...
+				link( vd, childDisks );
+				break;
+			}
+		}
+	}
+
 	private final File dir;
 	private final List<VirtualDisk> baseDisks;
 	private final Log log;
 
+	static public final String FILESUFFIX = ".vmx";
+
+	// A VMware vm dir always seems to have a .vmx file (??)...
+	static public final FilenameFilter VMXFILE =
+		new FilenameFilter() {
+			public boolean accept( File dir, String name ) {
+				return name.endsWith( FILESUFFIX );
+			}
+		};
 }
 
 

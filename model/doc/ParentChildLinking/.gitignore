@@ -1,0 +1,7 @@
+*.log
+*.aux*
+*.d
+*.fls
+*.pdf
+
+# eof

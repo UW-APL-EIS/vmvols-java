@@ -54,6 +54,8 @@ import edu.uw.apl.vmvols.model.vmware.VMDKException;
  * (imported from VMWare) virtual disk drive formats.  VirtualBox
  * itself supports others, but I have never used/created one so have
  * no experience with those formats.
+ *
+ * @see VMwareVM
  */
 public class VBoxVM extends VirtualMachine {
 
@@ -68,8 +70,7 @@ public class VBoxVM extends VirtualMachine {
 	}
 
 	/**
-	 * Expected that file f (and its parent, if f not a directory)
-	 * have been passed to isVBoxVM prior to this call
+	 * Expected that file f been passed to isVBoxVM prior to this call
 	 */
 	public VBoxVM( File f ) throws IOException {
 		if( !isVBoxVM( f ) )
@@ -88,7 +89,7 @@ public class VBoxVM extends VirtualMachine {
 			try {
 				vdi = VDIDisk.readFrom( el );
 			} catch( VDIException e ) {
-				// LOOK: log e ??
+				log.warn( el + ": " + e );
 				continue;
 			}
 			if( vdi == null )
@@ -107,6 +108,7 @@ public class VBoxVM extends VirtualMachine {
 			try {
 				vmdk = VMDKDisk.readFrom( el );
 			} catch( VMDKException e ) {
+				log.warn( el + ": " + e );
 				continue;
 			}
 			if( vmdk == null )

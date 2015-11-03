@@ -24,6 +24,8 @@ import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
    Disk type 1:
 
    A growable virtual disk split into 2GB host files (called "split sparse").
+
+   NOTE: This disk type not yet implemented, TODO
  */
 
 public class SplitSparseDisk extends VMDKDisk {
@@ -46,14 +48,13 @@ public class SplitSparseDisk extends VMDKDisk {
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		throw new IllegalStateException( "To Implement..." );
-		//		return null;
+		throw new IllegalStateException( "To Implement: SplitSparseDisk..." );
 	}
 
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
-		throw new IllegalStateException( "To Implement..." );
-		//return null;
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
+		throw new IllegalStateException( "To Implement: SplitSparseDisk..." );
 	}
 }
 

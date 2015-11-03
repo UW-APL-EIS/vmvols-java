@@ -177,6 +177,11 @@ public class Descriptor {
 					uuidParent = UUID.fromString( m.group(1) );
 					continue;
 				}
+				m = reParentFileNameHint.matcher( line );
+				if( m.matches() ) {
+					parentFileNameHint = m.group(1);
+					continue;
+				}
 			}
 		} catch( IOException never ) {
 		}
@@ -186,14 +191,23 @@ public class Descriptor {
 	public String toString() {
 		return data;
 	}
-
+	
 	public String getCreateType() {
 		return type;
 	}
 	
+	public String getParentFileNameHint() {
+		return parentFileNameHint;
+	}
+	
+	// createType="monolithicSparse"
 	static private final Pattern reType = Pattern.compile
 		( "createType=\"([A-Za-z]+)\"" );
-	
+
+	// parentFileNameHint="/home/stuart/vmware/Windows 7 x64/Windows 7 x64.vmdk"
+	static private final Pattern reParentFileNameHint = Pattern.compile
+		( "parentFileNameHint=\"([^\")\"" );
+
 	// e1246c7c-05dd-48c5-aa5b-5ad44ce0c13e
 	static final String REUUID =
 		"\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-" +
@@ -207,6 +221,7 @@ public class Descriptor {
 	
 	final String data;
 	String type;
+	String parentFileNameHint;
 	UUID uuidImage, uuidParent;
 }
 

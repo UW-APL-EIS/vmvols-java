@@ -47,7 +47,9 @@ public class MonolithicStreamOptimizedDisk extends VMDKDisk {
 	}
 
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
+		// LOOK: check writable FALSE, error else
 		return extent.getRandomAccess();
 	}
 

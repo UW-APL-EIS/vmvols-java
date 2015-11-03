@@ -53,9 +53,10 @@ public class MonolithicSparseDisk extends VMDKDisk {
 	}
 
 	@Override
-	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
+	public RandomAccessVirtualDisk getRandomAccess( boolean writable )
+		throws IOException {
 		RandomAccessVirtualDisk parentRA = parent == null ? null :
-			parent.getRandomAccess();
+			parent.getRandomAccess( writable );
 		return extent.getRandomAccess( parentRA );
 	}
 
