@@ -15,6 +15,6 @@ JAR=`ls $JARSHOME | grep $ARTIFACT | sort -n -r | head -1`
 PACKAGE=edu.uw.apl.vmvols.cli
 CLAZZ=VDIInfo
 
-exec java $JAVA_OPTS -classpath target/$JAR $PACKAGE.$CLAZZ "$@"
+exec java $JAVA_OPTS -classpath $JARSHOME/$JAR $PACKAGE.$CLAZZ "$@"
 
 # eof
