@@ -176,9 +176,11 @@ also that example 3 appears to have no 'DDB' entries, same as example 2.
 
 Standalone vmdk produced by packer (v0.8.6) with a 'virtualbox-iso'
 builder.  Note that even though the configuration is for virtualBox,
-the file format for the virtual disk is a .vmdk.  Th
-Note how the createType is 'streamOptimized'.  .vmdk is associated
-with a .ovf file (found alongside the .vmdk).
+the file format for the virtual disk is a .vmdk.  Note how the
+createType is 'streamOptimized'.  The .vmdk file is associated with a
+.ovf file (found alongside the .vmdk).  Note also how packer adds the
+'ddb.uimage' fields into the descriptor.  These will be used in
+VirtualBox imports at least.
 
 \begin{verbatim}
 $ ./vmdkinfo ~/apl/projects/infosec/packer-vms/ubuntu-12.04.4-amd64/base/products/ubuntu-12.04.5-amd64-base-disk1.vmdk 
