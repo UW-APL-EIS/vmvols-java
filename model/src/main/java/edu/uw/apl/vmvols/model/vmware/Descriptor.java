@@ -167,6 +167,11 @@ public class Descriptor {
 					type = m.group(1);
 					continue;
 				}
+				m = reCID.matcher( line );
+				if( m.matches() ) {
+					cid = m.group(1);
+					continue;
+				}
 				m = reUUIDImage.matcher( line );
 				if( m.matches() ) {
 					uuidImage = UUID.fromString( m.group(1) );
@@ -179,10 +184,6 @@ public class Descriptor {
 				}
 				m = reParentFileNameHint.matcher( line );
 				if( m.matches() ) {
-
-					System.err.println( "PFNH " + line );
-
-					
 					parentFileNameHint = m.group(1);
 					continue;
 				}
@@ -199,6 +200,10 @@ public class Descriptor {
 	public String getCreateType() {
 		return type;
 	}
+
+	public String getCID() {
+		return cid;
+	}
 	
 	public String getParentFileNameHint() {
 		return parentFileNameHint;
@@ -208,9 +213,14 @@ public class Descriptor {
 	static final Pattern reType = Pattern.compile
 		( "createType=\"([A-Za-z]+)\"" );
 
-	// parentFileNameHint="/home/stuart/vmware/Windows 7 x64/Windows 7 x64.vmdk"
+	// CID=fe21c26a
+	static final Pattern reCID = Pattern.compile
+		( "CID=(\\p{XDigit}+)" );
+
+	// parentFileNameHint="path/to/vmware/Windows 7 x64/Windows 7 x64.vmdk"
 	static final Pattern reParentFileNameHint = Pattern.compile
 		( "parentFileNameHint=\"([^\"]+)\"" );
+
 
 	// e1246c7c-05dd-48c5-aa5b-5ad44ce0c13e
 	static final String REUUID =
@@ -225,7 +235,23 @@ public class Descriptor {
 	
 	final String data;
 	String type;
+
+	// Should be present in all (host-based) VMDK disks, used for our ID
+	String cid;
+	
+	/*
+	  Only present for VMDK virtual disks created by VMware products,
+	  e.g. Workstation, and only present then if this disk is the
+	  product of a Snapshot operation. Used by VMware to provide
+	  parent-child linkage across Snapshots.
+	*/
+
 	String parentFileNameHint;
+
+	/*
+	  Only present for VMDK virtual disks created by VirtualBox.  Used
+	  by VirtualBox to provide parent-child linkage across Snapshots.
+	*/
 	UUID uuidImage, uuidParent;
 }
 

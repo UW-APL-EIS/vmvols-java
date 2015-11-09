@@ -150,14 +150,34 @@ public class VBoxVM extends VirtualMachine {
 		return result;
 	}
 
-	static private void link( VirtualDisk needle,
-							  List<VirtualDisk> haystack ) {
-		UUID linkage = needle.getUUID();
-		for( VirtualDisk vd : haystack ) {
+	/**
+	 * @param childDisks - All non-base disks found when identifying
+	 * all .vdi and .vmdk files in a VirtualBox VM directory.  Not
+	 * necessarily true that this baseDisk is the parent of any/all of
+	 * the childDisks.  In fact, when called recursively (see
+	 * recursive call), baseDisk need not be a true baseDisk
+	 * (generation=1) at all.
+	 *
+	 * The way VirtualBox imports .vmdk files, it always adds
+	 * uuidImage/uuidParent info to the Descriptor, so NO need to
+	 * consult VMware's parentFileNameHint.
+	 */
+	private void link( VirtualDisk baseDisk,
+					   List<VirtualDisk> childDisks ) {
+
+		UUID linkage = baseDisk.getUUID();
+		for( VirtualDisk vd : childDisks ) {
+			/*
+			  Due to recursive nature of the link process, the needle
+			  and haystack member could be same object.
+			*/
+			if( vd == baseDisk )
+				continue;
 			if( linkage.equals( vd.getUUIDParent() ) ) {
-				needle.setChild( vd );
+				baseDisk.setChild( vd );
+				vd.setParent( baseDisk );
 				// and recursively for the identified child...
-				link( vd, haystack );
+				link( vd, childDisks );
 				break;
 			}
 		}

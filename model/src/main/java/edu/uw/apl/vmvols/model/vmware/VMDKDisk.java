@@ -204,6 +204,10 @@ abstract public class VMDKDisk extends VirtualDisk {
 		return descriptor.uuidParent;
 	}
 
+	public String getCID() {
+		return descriptor.getCID();
+	}
+	
 	public File getParentFileNameHint() {
 		String s = descriptor.getParentFileNameHint();
 		return s == null ? null : new File( s );
@@ -211,8 +215,8 @@ abstract public class VMDKDisk extends VirtualDisk {
 	
 	@Override
  	public String getID() {
-		VirtualDisk base = getBase();
-		return "VMDK-" + base.getUUID();
+		VMDKDisk base = (VMDKDisk)getBase();
+		return "VMDK-" + base.getCID();
 	}
 	
 	/*

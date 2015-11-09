@@ -154,6 +154,7 @@ public class VMwareVM extends VirtualMachine {
 			}
 			if( linkage.equals( pfnh ) ) {
 				baseDisk.setChild( vd );
+				vd.setParent( baseDisk );
 				// and recursively for the identified child...
 				link( vd, childDisks );
 				break;
