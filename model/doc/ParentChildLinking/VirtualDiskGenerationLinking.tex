@@ -171,8 +171,57 @@ RW 125829120 SPARSE "Windows 7 x64-000002.vmdk"
 Note the parentFileNameHint in example 3, as was in example 2.  Note
 also that example 3 appears to have no 'DDB' entries, same as example 2.
 
-
 \subsection{Example Disk 4}
+
+Clone of the VM containing the disk mentioned above in examples 1-3.
+Clone operation done in same VMware Workstation product as used to
+build the 1-3 examples disk.  Note the somewhat odd .vmdk name,
+containing 'cl' for 'clone'?
+
+\begin{verbatim}
+[~/.../infosec/vmvols/model (master)]$ ../cli/vmdkinfo ~/vmware/Clone\ of\ Windows\ 7\ x64/Windows\ 7\ x64-cl1.vmdk 
+Flags: 00000003
+Version: 1
+Capacity: 125829120
+GrainSize: 128
+DescriptorOffset: 1
+DescriptorSize: 20
+NumGTEsPerGT: 512
+rgdOffset: 21
+gdOffset: 7716
+Overhead: 15488
+Compression: 0
+
+# Disk DescriptorFile
+version=1
+encoding="UTF-8"
+CID=7c77be3e
+parentCID=ffffffff
+isNativeSnapshot="no"
+createType="monolithicSparse"
+
+# Extent description
+RW 125829120 SPARSE "Windows 7 x64-cl1.vmdk"
+
+# The Disk Data Base 
+#DDB
+
+ddb.adapterType = "lsilogic"
+ddb.deletable = "true"
+ddb.geometry.cylinders = "7832"
+ddb.geometry.heads = "255"
+ddb.geometry.sectors = "63"
+ddb.longContentID = "ba254740a7f06f67777b34661a687c32"
+ddb.uuid = "60 00 C2 91 ac 9e 55 71-5a a4 b4 1c 71 48 8f be"
+ddb.virtualHWVersion = "12"
+\end{verbatim}
+
+Note how the CID is actually the same as in the VM from which this VM
+was cloned!!  This is hopeless!  The CID cannot be used as a
+definitive identifier for a VMDK disk!  Hint: Use the db.uuid
+instead??  Or some combo of the two??
+
+\subsection{Example Disk 5}
 
 Standalone vmdk produced by packer (v0.8.6) with a 'virtualbox-iso'
 builder.  Note that even though the configuration is for virtualBox,
@@ -234,7 +283,7 @@ import process reads the streamOptimized input, but writes e.g. a
 monolithicSparse version locally as the VM's actual virtual disk
 format.
 
-\subsection{Example Disk 5}
+\subsection{Example Disk 6}
 
 Created in/by VirtualBox, but by selecting 'VMDK' as the 'Hard Drive
 Format Type' in the VM creation wizard.
@@ -274,10 +323,10 @@ ddb.uuid.modification="00000000-0000-0000-0000-000000000000"
 ddb.uuid.parentmodification="00000000-0000-0000-0000-000000000000"
 \end{verbatim}
 
-\subsection{Example Disk 6}
+\subsection{Example Disk 7}
 
 A snapshot, taken by/in VirtualBox, of the .vmdk file described above
-(Example 5):
+(Example 6):
 
 \begin{verbatim}
 $ ./vmdkinfo  ~/VirtualBox\ VMs/Blank_VMDK/Snapshots/\{b23c64d7-e938-4f7b-bc80-c56f4390dfe7\}.vmdk 
@@ -316,12 +365,12 @@ ddb.uuid.parentmodification="00000000-0000-0000-0000-000000000000"
 
 Note how the CID and parentCID in this descriptor do {\em not} given
 any hint on how to locate/identify the parent. The CIDs of the example
-disks 4 and 5 appear unrelated.
+disks 5 and 5 appear unrelated.
 
 What {\em is} useful are the ddb.uuid.* entries, which VirtualBox
 seems to use whereas VMware products do not.  The parent-child
-relationship between example disk 4 and 5 can be seen in the
-uuid.parent of disk 5 and uuid.image of disk 4.  Recall that in
+relationship between example disk 5 and 6 can be seen in the
+uuid.parent of disk 6 and uuid.image of disk 5.  Recall that in
 VirtualBox's native VDI format, uuidImage and uuidParent are both
 fields present in the 'VDI header', so it's almost as if VirtualBox
 are shoe-horning their own parent/child linking info idea into a VMDK
@@ -333,9 +382,9 @@ a parent.  Such a parent will have a ddb.uuid.image descriptor entry
 whose value matches the uuid.parent entry in the child.
 
 
-\subsection{Example Disk 7}
+\subsection{Example Disk 8}
 
-VirtualBox import of the OVF package created for Example Disk 4:
+VirtualBox import of the OVF package created for Example Disk 5:
 
 \begin{verbatim}
 $ ./vmdkinfo ~/VirtualBox\ VMs/ubuntu-12.04.5-amd64-base/ubuntu-12.04.5-amd64-base-disk1.vmdk 
