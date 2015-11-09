@@ -179,6 +179,10 @@ public class Descriptor {
 				}
 				m = reParentFileNameHint.matcher( line );
 				if( m.matches() ) {
+
+					System.err.println( "PFNH " + line );
+
+					
 					parentFileNameHint = m.group(1);
 					continue;
 				}
@@ -201,12 +205,12 @@ public class Descriptor {
 	}
 	
 	// createType="monolithicSparse"
-	static private final Pattern reType = Pattern.compile
+	static final Pattern reType = Pattern.compile
 		( "createType=\"([A-Za-z]+)\"" );
 
 	// parentFileNameHint="/home/stuart/vmware/Windows 7 x64/Windows 7 x64.vmdk"
-	static private final Pattern reParentFileNameHint = Pattern.compile
-		( "parentFileNameHint=\"([^\")\"" );
+	static final Pattern reParentFileNameHint = Pattern.compile
+		( "parentFileNameHint=\"([^\"]+)\"" );
 
 	// e1246c7c-05dd-48c5-aa5b-5ad44ce0c13e
 	static final String REUUID =

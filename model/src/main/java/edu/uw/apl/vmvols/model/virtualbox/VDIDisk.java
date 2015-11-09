@@ -93,6 +93,24 @@ abstract public class VDIDisk extends VirtualDisk {
 	}
 	
 	/**
+	 * Set the parent of this disk to the supplied disk p.  A check is
+	 * made on the linkage between the two, using getUUID and
+	 * getUUIDParent.  VirtualBox disks always have uuidImage and
+	 * uuidParent fields, unlike VMware ones, which may use
+	 * 'parentFileNameHint' instead.
+	 */
+	@Override
+	public void setParent( VirtualDisk p ) {
+		UUID linkage = p.getUUID();
+		if( !linkage.equals( getUUIDParent() ) ) {
+			throw new IllegalArgumentException
+				( "Linkage mismatch setting parent " + source + "," +
+				  p.getPath() );
+		}
+		super.setParent( p );
+	}
+
+	/**
 	 * Provide a hint to test apps as how to allocate their read buffers...
 	 */
 	abstract long contiguousStorage();

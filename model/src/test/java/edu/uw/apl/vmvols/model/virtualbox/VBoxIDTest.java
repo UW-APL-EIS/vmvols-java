@@ -35,7 +35,7 @@ public class VBoxIDTest extends junit.framework.TestCase {
 
 	// LOOK: Not asserting anything here ??
 	void test( File dir ) throws IOException {
-		if( !VBoxVM.isVBox( dir ) )
+		if( !VBoxVM.isVBoxVM( dir ) )
 			return;
 		VBoxVM vm = new VBoxVM( dir );
 		report( vm );
@@ -46,22 +46,15 @@ public class VBoxIDTest extends junit.framework.TestCase {
 		System.out.println( "Base: " + vm.getBaseDisks() );
 		System.out.println( "Active: " + vm.getActiveDisks() );
 		for( VirtualDisk vd : vm.getActiveDisks() ) {
-			VDIDisk vdi = (VDIDisk)vd;
-			report( vdi );
-			/*
-			  for( VirtualDisk an : vdi.getAncestors() ) {
-				VDIDisk vdian = (VDIDisk)an;
-				report( vdian );
-			}
-			*/
+			report( vd );
 		}
 	}
 
-	void report( VDIDisk vdi ) {
-		System.out.println( "Generation: " + vdi.getGeneration() );
+	void report( VirtualDisk vd ) {
+		System.out.println( "Generation: " + vd.getGeneration() );
 		//		System.out.println( "Create: " + vdi.imageCreationUUID() );
 		//System.out.println( "Parent: " + vdi.imageParentUUID() );
-		String id = vdi.getID();
+		String id = vd.getID();
 		System.out.println( "id " + id );
 	}
 }

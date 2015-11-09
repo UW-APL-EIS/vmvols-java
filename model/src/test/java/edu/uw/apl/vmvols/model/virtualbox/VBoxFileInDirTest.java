@@ -15,7 +15,11 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
 /**
  * Tests for {@link VBoxVM}
  *
- * @author Stuart Maclean
+ * @author Stuart Maclean.
+ *
+ * This test no no longer valid, we have abandoned the method of
+ * building a full VM object from one named .vdi file IN a vbox dir.
+ * Use VirtualDisk.create instead.
  */
 
 public class VBoxFileInDirTest extends junit.framework.TestCase {
@@ -30,24 +34,24 @@ public class VBoxFileInDirTest extends junit.framework.TestCase {
 		for( File f : fs ) {
 			// only testing bona-fide 'file in vbox vm dir' files...
 			File dir = f.getParentFile();
-			if( !VBoxVM.isVBox( dir ) )
+			if( !VBoxVM.isVBoxVM( dir ) )
 				continue;
-			test( f );
+			test( dir, f );
 		}
 	}
 
-	void test( File vdFile ) throws IOException {
-		if( vdFile.isDirectory() )
-			fail( "Not a file: " + vdFile );
-		System.err.println( vdFile );
+	void test( File vboxDir, File diskFile ) throws IOException {
+		if( !vboxDir.isDirectory() )
+			fail( "Not a directory: " + vboxDir );
+		System.err.println( vboxDir );
+		VBoxVM vm = new VBoxVM( vboxDir );
+
 		/*
-		  Recall that a VBox VM built from a specific .vdi file (as
-		  opposed to a directory) maintains JUST that ONE disk, NOT
-		  any others, hence the base disk count expected to be 1
+		  Can at least assert that one of the disks of the VM
+		  matches the diskFile
 		*/
-		VBoxVM vm = new VBoxVM( vdFile );
-		List<VirtualDisk> base = vm.getBaseDisks();
-		assertEquals( base.size(), 1 );
+		List<VirtualDisk> vds = vm.getBaseDisks();
+		
 	}
 }
 

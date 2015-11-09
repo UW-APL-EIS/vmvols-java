@@ -191,27 +191,24 @@ abstract public class VirtualDisk {
 	 * The frozen disk is the parent, the varying disk is the child,
 	 * and changes as that disk is written.  Which of these is 'the
 	 * snapshot' is a matter of interpretation!
+	 *
+	 * This method only called the 'link disks' procedure of VMs
+	 *
+	 * @see virtualbox.VBoxVM
+	 * @see vmware.VMwareVM
 	 */
 	public void setChild( VirtualDisk vd ) {
 		child = vd;
-		vd.setParent( this );
 	}
 
 	/**
-	 * Set the parent of this disk to the supplied disk p.  A check is
-	 * made on the linkage between the two, using getUUID and
-	 * getUUIDParent.
+	 * As per setChild
+	 *
+	 * @see setChild
 	 */
-	void setParent( VirtualDisk p ) {
-		UUID linkage = p.getUUID();
-		if( !linkage.equals( getUUIDParent() ) ) {
-			throw new IllegalArgumentException
-				( "Linkage mismatch setting parent " + source + "," +
-				  p.getPath() );
-		}
-		parent = p;
+	public void setParent( VirtualDisk vd ) {
+		parent = vd;
 	}
-
 	
 	/**
 	 * Mimic what a physical disk would return for a low-level
@@ -337,8 +334,8 @@ abstract public class VirtualDisk {
 	protected VirtualDisk parent, child;
 	protected final Log log;
 
-	static public final int ACTIVE = -1;
 	static public final int BASE = 1;
+	static public final int ACTIVE = -1;
 	
 	static public final UUID NULLUUID = new UUID( 0L, 0L );
 }

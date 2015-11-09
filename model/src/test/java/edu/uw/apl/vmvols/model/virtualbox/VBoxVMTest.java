@@ -32,7 +32,8 @@ public class VBoxVMTest extends junit.framework.TestCase {
 	}
 
 	void test( File dir ) throws IOException {
-		if( !VBoxVM.isVBox( dir ) )
+		System.out.println( dir );
+		if( !VBoxVM.isVBoxVM( dir ) )
 			return;
 		VBoxVM vm = new VBoxVM( dir );
 		report( vm );

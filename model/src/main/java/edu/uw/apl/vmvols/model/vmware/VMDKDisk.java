@@ -115,11 +115,15 @@ abstract public class VMDKDisk extends VirtualDisk {
 	static public VMDKDisk readFrom( File vmdkFile ) throws IOException {
 		VMDKDisk result = null;
 
+		Log log = LogFactory.getLog( VMDKDisk.class );
+		
 		Descriptor d = null;
 		try {
 			d = locateDescriptor( vmdkFile );
-			if( d == null )
+			if( d == null ) {
+				log.warn( "No descriptor found: " + vmdkFile );
 				return null;
+			}
 		} catch( IllegalStateException ise ) {
 			// LOOK: null is best result ???
 			return null;
@@ -142,6 +146,52 @@ abstract public class VMDKDisk extends VirtualDisk {
 			throw new VMDKException( "Disk type not supported: " + type );
 		}
 		return result;
+	}
+
+	/**
+	 * Set the parent of this disk to the supplied disk p.  A check is
+	 * made on the linkage between the two, using getUUID and
+	 * getUUIDParent.  Further, we may use 'parentFileNameHint'
+	 * instead.
+	 */
+	@Override
+	public void setParent( VirtualDisk vd ) {
+		UUID pUUID = getUUIDParent();
+		UUID uuid = vd.getUUID();
+		if( pUUID != null && uuid != null ) {
+			if( uuid.equals( pUUID ) ) {
+				throw new IllegalArgumentException
+					( "UUID linkage mismatch setting parent " + source + "," +
+					  vd.getPath() );
+			}
+			super.setParent( vd );
+			return;
+		}
+
+		File hint = getParentFileNameHint();
+		if( hint != null ) {
+			File pFile = vd.getPath();
+			try {
+				if( !hint.getCanonicalFile().equals
+					( pFile.getCanonicalFile() )) {
+					throw new IllegalArgumentException
+						( "ParentFileNameHint linkage mismatch setting parent "
+						  + source + "," + vd.getPath() );
+				}
+			} catch( IOException creatingCanonicalNames ) {
+					throw new IllegalArgumentException
+						( "ParentFileNameHint linkage I/O error setting parent "
+						  + source + "," + vd.getPath() );
+			}
+			super.setParent( vd );
+			return;
+		}
+
+		/*
+		  If passed the two tests above, deem it must be OK to assign
+		  this parent
+		*/
+		super.setParent( vd );
 	}
 
 	@Override

@@ -100,7 +100,11 @@ public class VBoxVM extends VirtualMachine {
 				children.add( vdi );
 		}
 			
-		// A VBox VM can also manage VMware .vmdk disks...
+		/*
+		  A VBox VM can also manage VMware .vmdk disks. If so,
+		  it buries its own uuidImage/uuidParent info in the
+		  Descriptor's 'ddb.*' entries.
+		*/
 		fs = FileUtils.listFiles
 			( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
 		for( File el : fs ) {

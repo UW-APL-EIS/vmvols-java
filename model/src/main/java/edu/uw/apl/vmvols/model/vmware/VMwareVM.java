@@ -57,7 +57,7 @@ public class VMwareVM extends VirtualMachine {
 			return false;
 
 		File[] fs = dir.listFiles( VMXFILE );
-		// If we find a .vbox file we assert yes.
+		// If we find a .vmx file we assert yes ????
 		if( fs.length > 0 )
 			return true;
 		return false;
