@@ -218,6 +218,11 @@ abstract public class VMDKDisk extends VirtualDisk {
 		VMDKDisk base = (VMDKDisk)getBase();
 		return "VMDK-" + base.getCID();
 	}
+
+	@Override
+	public String toString() {
+		return getPath() + " " + getClass();
+	}
 	
 	/*
 	public int hashCode() {

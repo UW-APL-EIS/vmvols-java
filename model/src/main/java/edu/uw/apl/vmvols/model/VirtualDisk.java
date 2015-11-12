@@ -126,8 +126,8 @@ abstract public class VirtualDisk {
 	 * supplied instead.
 	 *
 	 * @param generation, where 1 is a base disk, or
-	 * VirtualDisk.ACTIVE for the active disk (so user need not
-	 * calculate the active disk's generation).
+	 * VirtualDisk.ACTIVE for the active disk (so user need not have
+	 * to know/calculate the active disk's generation).
 	 */
 	static public VirtualDisk create( File f, int generation )
 		throws IOException {
@@ -146,7 +146,7 @@ abstract public class VirtualDisk {
 					fs.add( vd.getPath() );
 				throw new IllegalArgumentException
 					( "Ambiguous request, VM dir " + f + " has " +
-					  fs.size() + " disks : " + fs );
+					  fs.size() + " disks: " + fs );
 			}
 			VirtualDisk vd = bases.get(0);
 			return ( generation == ACTIVE ) ? vd.getActive() :
