@@ -139,6 +139,8 @@ abstract public class VirtualDisk {
 
 		List<VirtualDisk> bases = vm.getBaseDisks();
 
+		System.out.println( bases );
+
 		if( f.isDirectory() ) {
 			if( bases.size() > 1 ) {
 				List<File> fs = new ArrayList<File>();
@@ -155,6 +157,8 @@ abstract public class VirtualDisk {
 
 		VirtualDisk vd = null;
 		for( VirtualDisk base : bases ) {
+			System.out.println( "B : "+ base.getPath() );
+			System.out.println( "F : "+ f );
 			if( base.getPath().equals( f ) ) {
 				vd = base;
 				break;

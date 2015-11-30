@@ -37,12 +37,15 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		fs = FileUtils.listFiles
 			( root, new String[] { VMDKDisk.FILESUFFIX, VDIDisk.FILESUFFIX },
 			  true );
+		//		System.out.println( fs );
 	}
 
 	public void testCreateBase() throws IOException {
+		System.out.println( "testCreateBase" );
 		for( File f : fs ) {
 			System.out.println( f );
 			VirtualDisk vd = VirtualDisk.create( f, VirtualDisk.BASE );
+			System.out.println( vd.getGeneration() );
 			assertEquals( vd.getGeneration(), VirtualDisk.BASE );
 			VirtualDisk base = vd.getBase();
 			assertTrue( vd == base );
@@ -50,7 +53,7 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		}
 	}
 
-	public void testCreateActive() throws IOException {
+	public void _testCreateActive() throws IOException {
 		for( File f : fs ) {
 			System.out.println( f );
 			VirtualDisk vd = VirtualDisk.create( f );
@@ -59,7 +62,7 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		}
 	}
 
-	public void testCreateUnknownGeneration() throws IOException {
+	public void _testCreateUnknownGeneration() throws IOException {
 		for( File f : fs ) {
 			System.out.println( f );
 			try {
@@ -70,7 +73,7 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		}
 	}
 
-	public void testCreateFromVBoxDir() throws IOException {
+	public void _testCreateFromVBoxDir() throws IOException {
 		File root = new File( "data/VBox" );
 		if( !root.isDirectory() )
 			return;

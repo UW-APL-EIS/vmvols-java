@@ -1,0 +1,16 @@
+VMDIR
+  .vbox
+  .vdi
+  Snapshots/
+   .vdi
+
+1: from a vm dir
+VM vm = VirtualMachine.create( dir );
+
+// base disks
+VirtualDisk v = VirtualDisk.create( baseDiskFile );
+
+// a paker/vagrant artifact
+VirtualDisk v = VirtualDisk.create( diskFile );
+
+VirtualDisk v = VirtualDisk.create( diskFile, generation );

@@ -51,9 +51,9 @@ import edu.uw.apl.vmvols.model.vmware.VMDKException;
  * same thing.
  *
  * Currently we support just .vdi (native to VirtualBox) and .vmdk
- * (imported from VMWare) virtual disk drive formats.  VirtualBox
- * itself supports others, but I have never used/created one so have
- * no experience with those formats.
+ * (imported from VMWare) virtual disk drive formats for VirtualBox
+ * VMs.  VirtualBox itself supports others, but I have never
+ * needed/created/used one so have no experience with those formats.
  *
  * @see VMwareVM
  */
@@ -70,7 +70,9 @@ public class VBoxVM extends VirtualMachine {
 	}
 
 	/**
-	 * Expected that file f been passed to isVBoxVM prior to this call
+	 * @param f - a file which is expected to satisfy isVBoxVM
+	 *
+	 * @see isVBoxVM
 	 */
 	public VBoxVM( File f ) throws IOException {
 		if( !isVBoxVM( f ) )
@@ -152,7 +154,7 @@ public class VBoxVM extends VirtualMachine {
 
 	/**
 	 * @param childDisks - All non-base disks found when identifying
-	 * all .vdi and .vmdk files in a VirtualBox VM directory.  Not
+	 * all .vdi and .vmdk files under a VirtualBox VM directory.  Not
 	 * necessarily true that this baseDisk is the parent of any/all of
 	 * the childDisks.  In fact, when called recursively (see
 	 * recursive call), baseDisk need not be a true baseDisk

@@ -159,7 +159,7 @@ abstract public class VMDKDisk extends VirtualDisk {
 		UUID pUUID = getUUIDParent();
 		UUID uuid = vd.getUUID();
 		if( pUUID != null && uuid != null ) {
-			if( uuid.equals( pUUID ) ) {
+			if( !uuid.equals( pUUID ) ) {
 				throw new IllegalArgumentException
 					( "UUID linkage mismatch setting parent " + source + "," +
 					  vd.getPath() );
