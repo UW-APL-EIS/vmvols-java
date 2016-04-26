@@ -1,15 +1,24 @@
 #!/bin/bash                                                                     
 
+# Stuart Maclean: A driver script for mounting VM disks on the host.
+# Currently understands .vdi and .vmdk file formats, so should be able
+# to handle VirtualBox and (non-esxi/vmfs) VMWare managed VMs.
+#
+# Usage: vmmount /path/to/vm1 (/path/to/vmN)* mountPoint
+#
+# For options, invoke with -h, e.g.
+#
+# vmmount -h
+
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target
 
 ARTIFACT=vmvols-fuse
 
 # The Maven <version> becomes part of the final artifact name (the
-# jar).  Rather than hard-coding it here, we locate the jar with the
-# LATEST version. Thus we always run the LATEST code, should many
-# (stale) versions be present.
-
+# jar).  Rather than hard-coding a jar file name here, we locate the
+# jar with the LATEST version. Thus we always run the LATEST code,
+# should many (stale) versions be present.
 JAR=`ls $JARSHOME | grep $ARTIFACT | sort -n -r | head -1`
 
 PACKAGE=edu.uw.apl.vmvols.fuse

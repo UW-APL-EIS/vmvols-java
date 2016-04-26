@@ -1,4 +1,10 @@
 #!/bin/bash                                                                     
+#
+# Stuart Maclean: A driver script for VDIInfo, which prints to stdout details
+# of the meta-data at the head of a VirtualBox .vdi file.
+#
+# Usage: vdiinfo /path/to/vm/disk.vdi
+#
 
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target

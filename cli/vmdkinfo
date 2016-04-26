@@ -1,4 +1,12 @@
 #!/bin/bash                                                                     
+#
+# Stuart Maclean: A driver script for VMDKInfo, which prints to stdout
+# details of the meta-data (SparseExtentHeader and Descriptor) at the
+# head of a VMware .vmdk file (vmdk disks also used in some VirtualBox
+# VMs, and by the ovf/ova formats)
+#
+# Usage: vmdkinfo /path/to/vm/disk.vmdk
+#
 
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target

@@ -1,4 +1,18 @@
 #!/bin/bash                                                                     
+#
+# Stuart Maclean: A driver script for VDCat, which streams the entire
+# contents (from sector 0) of a VM virtual disk to stdout.  The
+# 'active' snapshot is always chosen, reflecting the content of the
+# virtual disk should the VM be powered on.
+#
+# Usage: vdcat /path/to/vm/disk.vdi
+#
+# Usage: vdcat /path/to/vm/disk.vmdk
+#
+# Usage: vdcat /path/to/vm/
+#
+# The last works only if the VM has a single hard drive, as most do.
+#
 
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target
