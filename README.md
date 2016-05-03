@@ -96,6 +96,12 @@ present at all.  The primary classes in this module are probably
 
 * [VMDKDisk] (./model/src/main/java/edu/uw/apl/vmvols/model/vmware/VMDKDisk.java)
 
+All .vdi files are supported. For .vmdk disks, currently the
+'monolithic sparse' and 'stream-optimized sparse' variants are
+supported.  The latter is the format used in .ovf/.ova files, and by
+Packer, Vagrant tools.  The former is likely what you get if you
+create new VMs from within e.g. VMware Workstation.
+
 Access to virtualdisk content is then via these two methods, defined
 in VirtualDisk:
 
