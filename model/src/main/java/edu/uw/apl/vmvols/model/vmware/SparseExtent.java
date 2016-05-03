@@ -12,7 +12,24 @@ import org.apache.commons.logging.LogFactory;
 import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
-public class SparseExtent {
+/**
+ * @author Stuart Maclean
+ *
+ * A VMware 'extent' contains some or all of the data of a virtual
+ * disk.  Typically, most .vmdk files are of the
+ * 'monolithicsparsedisk' variant, which employ a single extent to
+ * hold ALL of the virtual disk data.
+ *
+ * A 'sparse extent' is then a SparseExtentHeader plus the data, held
+ * in 'grains'.  Info in the SEH tells us where to look in the host
+ * file (the .vmdk) for data at any given offset in the virtual disk.
+
+ * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK
+ * format, grain directories and tables, etc.
+ *
+ */
+
+ public class SparseExtent {
 
 	public SparseExtent( File f, SparseExtentHeader h ) {
 		source = f;
@@ -160,20 +177,14 @@ public class SparseExtent {
 	  pointer (which is a long) to a physical location in the backing
 	  vmdk file, by use of simple indexing and offsets using the grain
 	  directory, grain tables and offset into grain.
-
-	  Note that since the SparseExtentInputStream is set up
-	  with both a starting sector and sector count, it works for both
-	  whole VMDKDisks and for Partitions and Unallocateds within.
 	*/
 
 	class SparseExtentRandomAccess extends RandomAccessVirtualDisk {
 		/**
-		   @param pis inputstream of any parent extent, matching this
-		   SEIS, which may represent a whole VMDKDisk or a
-		   VirtualPartition (or even a VirtualUnallocated).  If the
-		   enclosing VMDKDisk has no parent, this will be null.  So
-		   pis always aligns with this SEIS, in terms of the sector
-		   sequence spanned.
+		   @param parentRA randomaccessvirtualdisk of any parent
+		   extent, matching this SERA.  If the enclosing VMDKDisk has
+		   no parent, this will be null.  So parentRA always aligns
+		   with this SERA, in terms of the sector sequence spanned.
 
 		   Called only within this class, local access...
 		*/
@@ -209,7 +220,8 @@ public class SparseExtent {
 		public void seek( long s ) throws IOException {
 			/*
 			  According to java.io.RandomAccessFile, no restriction on
-			  seek.  That is, seek posn can be -ve or past eof
+			  seek position s.  That is, seek posn can be -ve or past
+			  eof
 			*/
 			if( parentRA != null )
 				parentRA.seek( s );
@@ -220,15 +232,15 @@ public class SparseExtent {
 		/**
 		   For the array read, we shall attempt to satisy the length
 		   requested, even if it is takes us many reads (of the
-		   physical file) from different grains to do so.  While the
-		   contract for InputStream is that any read CAN return < len
-		   bytes, for InputStreams backed by file data, users probably
-		   expect len bytes back (fewer of course if eof).
+		   physical .vmdk file) from different grains to do so.  While
+		   the contract for InputStream is that any read CAN return <
+		   len bytes, for InputStreams backed by file data, users
+		   probably expect len bytes back (fewer of course if eof).
 
 		   Further, when using this class with our
-		   VirtualDiskFS/Fuse4j/fuse system to expose the vmdk to
-		   fuse, fuse states that the callback read operation is
-		   REQUIRED to return len bytes if they are available
+		   VirtualMachineFileSystemS/Fuse4j/fuse system to expose the
+		   vmdk to fuse, fuse states that the callback read operation
+		   is REQUIRED to return len bytes if they are available
 		   (i.e. not read past eof)
 		*/
 		   
@@ -436,12 +448,13 @@ public class SparseExtent {
 	
 
 	/*
-	  The spec says that the default grain size is 2^7 = 128 sectors,
-	  or 64KB.  So prealloc the '64KB zero grain', so that all
-	  SparseExents, StreamOptimizedSparseExtents can use it (so saving
-	  on per-disk/stream copies)
+	  The VMware vmdk spec says that the default grain size is 2^7 =
+	  128 sectors, or 64KB.  So prealloc the '64KB zero grain', so
+	  that all SparseExents, StreamOptimizedSparseExtents can use it
+	  (so saving on per-disk/stream copies)
 	*/
 
+	 // LOOK: We have this in ./Constants.java ??
 	static final long GRAINSIZE_DEFAULT = 128;
 
 	static final long NUMGTESPERGT = 512;

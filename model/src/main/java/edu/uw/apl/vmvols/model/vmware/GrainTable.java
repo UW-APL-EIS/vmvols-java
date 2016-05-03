@@ -3,6 +3,8 @@ package edu.uw.apl.vmvols.model.vmware;
 import org.apache.commons.io.EndianUtils;
 
 /**
+ * @author Stuart Maclean.
+ *
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
  */
 
@@ -10,8 +12,9 @@ public class GrainTable {
 
 	public GrainTable( byte[] raw ) {
 		if( raw.length != SIZEOF ) {
-			throw new IllegalArgumentException( "GrainTable raw buffer length " +
-												raw.length + ", expected " + SIZEOF);
+			throw new IllegalArgumentException
+				( "GrainTable raw buffer length " +
+				  raw.length + ", expected " + SIZEOF);
 		}
 		gtes = new long[512];
 		for( int i = 0; i < gtes.length; i++ ) {

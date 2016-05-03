@@ -33,7 +33,7 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
  * That excellent description made this reader very straightforward. Only
  * one missing detail: no endianness mentioned.  We guessed little-endian
- * and guessed right ;)
+ * and seem to have guessed right ;)
  */
 
 /**
@@ -143,7 +143,7 @@ abstract public class VMDKDisk extends VirtualDisk {
 			result = new MonolithicStreamOptimizedDisk( vmdkFile, seh, d );
 		} else {
 			// to finish..
-			throw new VMDKException( "Disk type not supported: " + type );
+			throw new VMDKException( "Disk type not yet supported: " + type );
 		}
 		return result;
 	}

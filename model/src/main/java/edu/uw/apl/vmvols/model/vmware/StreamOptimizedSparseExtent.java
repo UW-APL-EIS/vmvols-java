@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-//import java.util.zip.DeflaterInputStream;
-//import java.util.zip.InflaterInputStream;
 
 import org.apache.commons.io.EndianUtils;
 import org.apache.commons.logging.Log;
@@ -20,9 +18,12 @@ import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
+ * @author Stuart Maclean
+ *
  * Stream-optimized compressed sparse extent.  The normal format for
- * vmdk files in .ovf bundles.  As well as being 'sparse', each grain
- * for which there _IS_ data is compressed using RFC1951 (Deflate).
+ * vmdk files in .ovf/.ova bundles.  As well as being 'sparse', each
+ * grain for which there <em>is</em> data is compressed using RFC1951
+ * (Deflate).
  */
 public class StreamOptimizedSparseExtent {
 
@@ -192,17 +193,12 @@ public class StreamOptimizedSparseExtent {
 	public InputStream getInputStream() throws IOException {
 		readMetaData();
 		buildZeroGrains();
-		//		checkParent();
-		InputStream pis = null;//parent.getInputStream();
 		return new StreamOptimizedRandomAccess();
 	}
 
 	public RandomAccessVirtualDisk getRandomAccess() throws IOException {
 		readMetaData();
 		buildZeroGrains();
-		//	readMetaData();
-		//		checkParent();
-		//		RandomAccessVirtualDisk pra = parent.getRandomAccess();
 		return new StreamOptimizedRandomAccess();
 	}
 
@@ -218,7 +214,6 @@ public class StreamOptimizedSparseExtent {
 
 		@Override
 		public void close() throws IOException {
-			//			parentRA.close();
 			raf.close();
 		}
 		   
@@ -226,16 +221,15 @@ public class StreamOptimizedSparseExtent {
 		public void seek( long s ) throws IOException {
 			/*
 			  According to java.io.RandomAccessFile, no restriction on
-			  seek.  That is, seek posn can be -ve or past eof
+			  seek position s.  That is, seek posn can be -ve or past
+			  eof
 			*/
-			//			parentRA.seek( s );
 			posn = s;
 			dPos();
 		}
 
 		@Override
 		public long skip( long n ) throws IOException {
-			//	parentRA.skip( n );
 			long result = super.skip( n );
 			dPos();
 			return result;
@@ -350,14 +344,15 @@ public class StreamOptimizedSparseExtent {
 		private void dPos() {
 
 			/*
-			  This is the crux of the sparse reading. We map logically
-			  map the 'file pointer' on the input stream to a block
-			  map and block offset.  To do the next read, we then calc
-			  a physical seek offset into the atual file and read.
+			  This is the crux of the sparse reading. We logically map
+			  the 'file pointer' on the input stream (or random
+			  access) to a grain table and grain offset.  To do the next
+			  read, we then calc a physical seek offset into the atual
+			  file and read.
 
-			  According to java.io.RandomAccessFile, a file posn
-			  is permitted to be past its size limit.  We cannot
-			  map such a posn to the block map info of course...
+			  According to java.io.RandomAccessFile, a file posn is
+			  permitted to be past its size limit.  We cannot map such
+			  a posn to the grain directory/tables info of course...
 			*/
 			if( posn >= size )
 				return;
@@ -380,7 +375,6 @@ public class StreamOptimizedSparseExtent {
 		}
 
 		private final RandomAccessFile raf;
-		//		private final RandomAccessVirtualDisk parentRA;
 		private int gdIndex, gtIndex;
 		private long gOffset;
 		private long gtePrev;
@@ -478,14 +472,6 @@ public class StreamOptimizedSparseExtent {
 	private byte[] zeroGrainTable;
 	private long[][] grainDirectory;
 
-	/*
-	  List<GrainMarker> grainMarkers;
-	List<MetadataMarker> metadataMarkers;
-
-	long grainTableCount;
-	GrainTable[] grainTables;
-	GrainDirectory grainDirectory;
-	*/
 }
 
 // eof

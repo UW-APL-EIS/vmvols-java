@@ -44,20 +44,25 @@ import edu.uw.apl.vmvols.model.VirtualMachine;
  * running.  It is the 'current snapshot'.  This API also supports
  * accessing any 'generation' (Snapshot) of any disk, all the way up
  * the 'base disk' (which has generation 1), which is held in the file
- * the VMWare app (Workstation?) created when the VM was first built.
- * If a VM has never had a Snapshot taken, its active disk(s) and base
- * disk(s) are the same thing.
+ * the VMWare application (Workstation?) created when the VM was first
+ * built.  If a VM has never had a Snapshot taken, its active disk(s)
+ * and base disk(s) are the same thing.
  *
- * @see VBoxVM
+ * @see edu.uw.apl.vmvols.model.VirtualMachine
+ * @see edu.uw.apl.vmvols.model.virtualbox.VBoxVM
  */
 public class VMwareVM extends VirtualMachine {
 
+	/**
+	 * Test to see if a directory in the filesystem looks like
+	 * it is home to a VMware virtual machine
+	 */
 	static public boolean isVMwareVM( File dir ) {
 		if( !dir.isDirectory() )
 			return false;
 
 		File[] fs = dir.listFiles( VMXFILE );
-		// If we find a .vmx file we assert yes ????
+		// If we find a .vmx file, we assert yes ????
 		if( fs.length > 0 )
 			return true;
 		return false;
@@ -142,6 +147,7 @@ public class VMwareVM extends VirtualMachine {
 			*/
 			if( vd == baseDisk )
 				continue;
+
 			File pfnh = vd.getParentFileNameHint();
 			if( pfnh == null )
 				continue;

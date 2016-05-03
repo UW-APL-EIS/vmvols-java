@@ -21,6 +21,8 @@ import org.apache.commons.logging.LogFactory;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
+ * @author Stuart Maclean
+ *
    Disk type 1:
 
    A growable virtual disk split into 2GB host files (called "split sparse").

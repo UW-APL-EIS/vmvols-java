@@ -1,7 +1,10 @@
 package edu.uw.apl.vmvols.model.vmware;
 
 /**
- * @author Stuart Maclean
+ * @author Stuart Maclean.
+ *
+ * Various constants relating to meta-data (Descriptor and
+ * SparseExtentHeader) of VMware virtual disk files.
  */
 
 public class Constants {

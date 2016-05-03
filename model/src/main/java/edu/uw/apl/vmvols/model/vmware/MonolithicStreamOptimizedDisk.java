@@ -21,6 +21,20 @@ import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
+ * @author Stuart Maclean.
+ *
+ * A stream-optimized VMware virtual disk is one where grains
+ * (nominally, 64K of data) are each compressed, for the purposes of
+ * moving the data across networks.  The MonolithicStreamOptimizedDisk
+ * is the .vmdk variant you get when
+ *
+ * Exporting a VM to .ovf/.ova file formats
+ *
+ * Build a VM with Vagrant (@see https://www.vagrantup.com)
+ *
+ * Obviously we cannot write to a monolithicstreamoptimizeddisk, since
+ * it would need unzipping on the fly, not something we are interested
+ * in.
  */
 
 public class MonolithicStreamOptimizedDisk extends VMDKDisk {

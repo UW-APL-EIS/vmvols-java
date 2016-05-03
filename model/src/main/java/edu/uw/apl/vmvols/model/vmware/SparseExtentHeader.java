@@ -17,14 +17,23 @@ import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.VirtualDisk;
 
 /**
-   Based upon page 8 of the Virtual Disk Format 1.1 spec...
-*/
+ * @author Stuart Maclean.
+ *
+ * Object representation of a VMware SparseExtentHeader, a data structure
+ * which appears at the very start of .vmdk files.
+ *
+ * Based upon page 8 of the Virtual Disk Format 1.1 spec, which gives
+ * the usual 'definition by C struct'.
+ *
+ * @see Descriptor
+ */
 public class SparseExtentHeader {
 	
 	/**
 	 * @param ba expected 512 bytes extracted from a .vmdk file.
+	 *
 	 * Normally at file start, but streamOptimized disks have
-	 * footers (matching header layout) near end of file.
+	 * footers (matching header layout) near end of file too.
 	 */
 	public SparseExtentHeader( byte[] ba ) throws IOException {
 

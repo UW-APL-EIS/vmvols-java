@@ -6,6 +6,8 @@ import java.io.StringWriter;
 import org.apache.commons.io.EndianUtils;
 
 /**
+ * @author Stuart Maclean.
+ *
  * See model/doc/vmware/vmdk_specs.pdf for description of the VMDK format.
  */
 

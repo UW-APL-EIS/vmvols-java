@@ -22,10 +22,16 @@ import edu.uw.apl.vmvols.model.Constants;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 
 /**
-   Disk type 0:
+ * @author Stuart Maclean.
 
-   A growable virtual disk contained in a single host file
-   (called "monolithic sparse").
+ * Disk type 0:
+
+   A growable VMware virtual disk contained in a single host file,
+   termed a "monolithic sparse" virtual disk.  Monolithic meaning
+   'data for the entire virtual disk is contained in a single host
+   file', and sparse meaning 'only allocates grains of data in the
+   host file as corresponding data areas in the virtual disk are read
+   or written'.
  */
 
 public class MonolithicSparseDisk extends VMDKDisk {
@@ -61,7 +67,6 @@ public class MonolithicSparseDisk extends VMDKDisk {
 	}
 
 	private final SparseExtent extent;
-
 }
 
 // eof
