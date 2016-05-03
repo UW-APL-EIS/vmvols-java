@@ -15,10 +15,10 @@ ones).
 
 That said, the most useful aspect of vmvols is its use of FUSE to
 expose VM drive contents under mount points on the host.  This
-limits the usefulness of the 'fuse' sub-artifact to platforms
+limits the usefulness of the 'fuse' sub-module to platforms
 supporting FUSE, which I think means Linux and Mac OSX (?)  Note that
 we use FUSE4J to bridge the Java world of vmvols to the C world of FUSE.
-More info on FUSE4J at https://github.
+More info on FUSE4J at https://github.com/uw-dims/fuse4j.
 
 Required Tools
 --------------
@@ -85,7 +85,7 @@ parent pom at the root level.  The modules are as follows
 # Model
 
 The primary vmvols module.  Contains pure Java parsers for .vdi and
-.vmdk file formats, as so enables access to virtual disk content with
+.vmdk file formats, and so enables access to virtual disk content with
 the VM powered off.  Indeed no VirtualBox/VMware software need be
 present at all.  The primary classes in this module are probably
 
@@ -103,14 +103,20 @@ in VirtualDisk:
 
 * getRandomAccess
 
+There are some notes related to parent-child snapshot file linkage
+[here] (./model/doc/ParentChildLinking).
+
 # Fuse
 
 This module contains classes bridging the model classes (above) to the
-FUSE4J api (and hence to FUSE).  Also included is arguably the most
-useful tool in all of vmvols --- the vmmount shell script driver for
-the class which enables host-level access to virtual machine disk
-content. See [vmmount] (./fuse/vmmount) and its [Java sources]
-(./fuse/src/main/java/edu/uw/apl/vmvols/fuse/) for the gory details.
+FUSE4J api, and from there to [FUSE]
+(https://github.com/libfuse/libfuse).
+
+Also included is arguably the most useful tool in all of vmvols ---
+the vmmount shell script driver for the class which enables host-level
+access to virtual machine disk content. See [vmmount] (./fuse/vmmount)
+and its [Java sources] (./fuse/src/main/java/edu/uw/apl/vmvols/fuse/)
+for the gory details.
 
 To use vmmount, just locate one of your local VMs:
 
@@ -123,16 +129,24 @@ $ mkdir mount
 
 $ ./vmmount /path/to/my/vbox/windowsVM/ mount
 
-$ ls mount
-
+$ tree mount
+mount/
+ windowsVM
+   sda
+   
 // mmls is a Sleuthkit tool for volume system inspection
+// This would be the C: drive of the VM above
 $ mmls mount/windowsVM/sda
 ```
 # CLI
 
+See the ./cli module.
+
 To finish...
 
 # Samples
+
+See the ./samples module.
 
 To finish
 
@@ -149,7 +163,7 @@ Why use vmvols?
 * It is more fully-featured than existing VM mount utilities. Or
   perhaps we should say "contains features existing tools do
   not". Under a single mount point, you can inspect many Snapshots,
-  over many disks, of many VMs.
+  over many disks (e.g. C:, D:), of many VMs.
 
 * You don't have a local VirtualBox, VMWare installation. vmvols is
   pure Java, it doesn't rely on any VM manager libraries/tools.
@@ -167,15 +181,16 @@ Why use vmvols when I could just use...
 * vdfuse?
 
 Why does vmvols exist?
-
+  
 * I fancied the challenge of reverse engineering file formats for
 Virtualbox, and to a lesser extent VMware, managed VM hard disk
-contents.
+contents.  The results proved useful to me in a malware analysis
+capacity, I thought others may benefit too.
 
 * I thought it might be useful in a malware analysis workflow using
 say Cuckoo Sandbox.  We take Snapshots before and after a run, mount
 both Snapshots, and run Sleuthkit tools over the two filesystems to
-infer changes.
+infer dischanges.
 
 Local Repository
 ----------------
@@ -195,10 +210,10 @@ fuse bridge that is Fuse4j is [there]
 (https://github.com/uw-dims/fuse4j).
 
 To save the vmvols user the chore of building and installing these
-dependencies, we are bundling these compiled artifacts into a 'project-local
-Maven repo' at [./.repository](./.repository).  The relevant [pom] (./fuse/pom.xml)
-refers to this repo to resolve the artifact dependencies.  The
-project-local repo looks like this:
+dependencies, we are bundling these compiled artifacts into a
+'project-local Maven repo' at [./.repository](./.repository).  The
+relevant [pom] (./fuse/pom.xml) refers to this repo to resolve the
+artifact dependencies.  The project-local repo looks like this:
 
 ```
 $ cd /path/to/vmvols
