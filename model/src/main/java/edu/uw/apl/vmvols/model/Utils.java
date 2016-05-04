@@ -13,17 +13,24 @@ import org.apache.commons.codec.binary.Hex;
 /**
  * @author Stuart Maclean
  *
- * Various utility methods related to reading from InputStreams
+ * Various utility methods related to reading from InputStreams, in
+ * particular ensuring that an exact number of bytes have been
+ * read/skipped.  Contracts for java.io.InputStream read operations
+ * are always that 'fewer bytes than the supplied amount CAN be
+ * returned'.  We want ALL bytes back!
  */
 
 public class Utils {
 
 	/**
 	   Mimic DataInput.readFully, avoiding the use of a
-	   DataInputStream wrapper itself.  Follows the contract of
-	   DataInput.readFully (especially the throwing of EOFException on
-	   incomplete read)
+	   DataInputStream wrapper around an InputStream.  Follows the
+	   contract of DataInput.readFully (especially the throwing of
+	   EOFException on incomplete read)
 
+	   Should read byte count into b matching b.length itself, i.e
+	   completely fill up b.
+	   
 	   @see DataInput.readFully
 	*/
 	static public void readFully( InputStream is, byte[] b )
@@ -39,7 +46,8 @@ public class Utils {
 
 	/**
 	   The contract of InputStream.skip( long n ) is such that the
-	   actual skip count can be < n.  So wrap it in a loop...
+	   actual skip count can be < n.  So wrap it in a loop to turn
+	   ' <= n ' into ' == n'.
 	*/
 	static public long skipFully( InputStream is, long skip )
 		throws IOException {
@@ -112,7 +120,6 @@ public class Utils {
 		}
 		return String.format( "%.1fT", (double)bytes / Constants.TiB );
 	}
-
 }
 
 // eof

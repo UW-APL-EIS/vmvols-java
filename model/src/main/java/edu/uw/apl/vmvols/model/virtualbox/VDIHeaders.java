@@ -14,8 +14,9 @@ import org.apache.commons.io.EndianUtils;
  * @author Stuart Maclean
  *
  * Parse the headers that appear at the head of all VirtualBox .vdi
- * files.
+ * files.  At this time, we understand only a 'Version 1 Header'.
  *
+ * @see VDICore.h
  */
  public class VDIHeaders {
 
@@ -232,6 +233,8 @@ import org.apache.commons.io.EndianUtils;
 
 	/**
 	 * As per /path/to/vbox/include/iprt/uuid.h
+	 *
+	 * LOOK: Is this RTUUID class even used still?
 	 */
 	static class RTUUID {
 		public RTUUID( byte[] ba ) throws IOException {

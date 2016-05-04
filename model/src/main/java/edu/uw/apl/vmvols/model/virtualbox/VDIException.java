@@ -3,6 +3,8 @@ package edu.uw.apl.vmvols.model.virtualbox;
 import edu.uw.apl.vmvols.model.VirtualDiskException;
 
 /**
+ * @author Stuart Maclean
+ 
    Base class of all things that could go wrong with parsing a .vdi
    file.  Note that this is separate from IOExceptions.  Here we just
    care about understanding the data structures within the file.

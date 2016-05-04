@@ -3,7 +3,8 @@ package edu.uw.apl.vmvols.model;
 /**
  * @author Stuart Maclean
  *
- * Various simple math constants in the domain of disk size processing
+ * Various simple math constants in the domain of disk size processing.
+ * Apache commons-io likely has these too?
  */
 public class Constants {
 

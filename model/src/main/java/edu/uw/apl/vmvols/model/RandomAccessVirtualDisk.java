@@ -18,10 +18,12 @@ import java.io.InputStream;
  * writeImpl
  * seek
  *
- * We subclass InputStream, and steal a partial write-oriented API
- * from RandomAccessFile.  Especially useful is 'seek', allowing us to
- * hop around the disk even when reading, a feature that is required
- * by file system traversals by e.g. Sleuthkit.
+ * We subclass java.io.InputStream, and steal a partial write-oriented
+ * API from java.io.RandomAccessFile.  Especially useful is 'seek',
+ * allowing us to hop around the disk even when reading, a feature
+ * that is required by file system traversals by e.g. Sleuthkit.  The
+ * seekability of the virtual disk data via this class is also what
+ * makes our VirtualMachineFileSystem (FUSE) possible.
  */
 
 abstract public class RandomAccessVirtualDisk extends InputStream {
@@ -101,7 +103,7 @@ abstract public class RandomAccessVirtualDisk extends InputStream {
 		
 	public void write( byte[] b, int off, int len ) throws IOException {
 
-		// checks from the contract for RandomAccessFile...
+		// checks from the contract for java.io.RandomAccessFile...
 		if( b == null )
 			throw new NullPointerException();
 		if( off < 0 || len < 0 || off + len > b.length ) {

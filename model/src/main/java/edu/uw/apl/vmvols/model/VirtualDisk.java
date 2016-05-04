@@ -30,12 +30,14 @@ import org.apache.commons.logging.LogFactory;
  * if imported from an OVF/OVA file).
  *
  * Generation 2 would be the disk once one snapshot had be taken, etc.
+ *
  * The <em>active</em> disk is the one with the highest generation
  * number, and it corresponds to the version of the disk that would be
  * read/written were the VM to be powered up.
  *
- * Note how generationing applies to each virtual disk and
- * <em>not</em> each virtual machine.  Imagine this sequence of events:
+ * Note how generationing applies to each virtual disk independently,
+ * and <em>not</em> each virtual machine.  Imagine this sequence of
+ * events:
  *
  * VM created, with a single virtual hard drive (disk).  This is our
  * base disk.
@@ -53,14 +55,15 @@ import org.apache.commons.logging.LogFactory;
  * has 3 generations, and our second disk has two generations.
  *
  * After the second snapshot, the active disks are generation 3 for
- * first disk and generation 2 for second disk.  The base disks are
- * generation 1 for both disks.  Our VM api supports access to
+ * the first disk and generation 2 for the later-added second disk.
+ * The base disks are generation 1 for both disks.  Our VM api
+ * supports access to
  *
  * activeDisks
  * baseDisks
  * identified generations
  *
- * The basic API for accessing the data of virtual disk is very small, just
+ * The basic API for accessing the data of virtual disks is very small, just
  *
  * getInputStream
  * getRandomAccess
@@ -68,7 +71,7 @@ import org.apache.commons.logging.LogFactory;
  * Example usage:
  *
  <code>
- // No generation, retrieves ACTIVE disk, highest generation
+ // No generation supplied, retrieves ACTIVE disk, highest generation
  VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ) );
 
  // Some identified generation...
@@ -98,7 +101,7 @@ abstract public class VirtualDisk {
 	 *
 	 * Convenience class for the full create method, with caller
 	 * expecting/getting the active disk derived from the one
-	 * identified by f
+	 * identified by suppled File f.
 	 *
 	 * @param f a File on the host system identifying the
 	 * <em>base</em> disk of one of the hard disks in a VM.  By base,

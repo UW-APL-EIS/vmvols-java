@@ -16,12 +16,13 @@ import edu.uw.apl.vmvols.model.vmware.VMwareVM;
  * @author Stuart Maclean
  *
  * A base class for all (two!) the virtual machine managers whose disk
- * formats we support: VirtualBox and VMWare (host-based, not vmfs,
+ * formats we support: VirtualBox and VMWare (host-based, not esxi/vmfs,
  * etc) .
  *
  * Example: for a virtual machine (perhaps a VirtualBox one) in dir
  * 'M' with a single virtual hard disk, this code gets us access to
- * the disk as a 'device file', i.e. whole disk (not any partition).
+ * the disk as a 'device file', i.e. whole disk (not any partitions,
+ * use Sleuthkit for volumeSystem/partition traversal)).
  *
  <code>
  VirtualMachine vm = VirtualMachine.create( "/path/to/M" );
