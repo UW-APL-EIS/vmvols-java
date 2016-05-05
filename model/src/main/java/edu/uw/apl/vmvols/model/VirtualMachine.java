@@ -57,8 +57,8 @@ abstract public class VirtualMachine {
 			return new VBoxVM( f );
 		if( VMwareVM.isVMwareVM( f ) )
 			return new VMwareVM( f );
-		throw new IllegalStateException( "Cannot create VirtualMachine from "+
-										 f );
+		throw new IllegalArgumentException
+			( "Not a virtual machine directory "+ f );
 	}
 
 	abstract public String getName();

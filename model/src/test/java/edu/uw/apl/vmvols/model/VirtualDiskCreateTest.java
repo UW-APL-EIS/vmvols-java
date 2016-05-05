@@ -40,12 +40,22 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		//		System.out.println( fs );
 	}
 
+	public void testCreateSelf() throws IOException {
+		System.out.println( "testCreateSelf" );
+		for( File f : fs ) {
+			System.out.println( f );
+			VirtualDisk vd = VirtualDisk.create( f );
+			File source = vd.getPath();
+			assertTrue( f.getCanonicalFile().equals
+						( source.getCanonicalFile() ) );
+		}
+	}
+
 	public void testCreateBase() throws IOException {
 		System.out.println( "testCreateBase" );
 		for( File f : fs ) {
 			System.out.println( f );
 			VirtualDisk vd = VirtualDisk.create( f, VirtualDisk.BASE );
-			System.out.println( vd.getGeneration() );
 			assertEquals( vd.getGeneration(), VirtualDisk.BASE );
 			VirtualDisk base = vd.getBase();
 			assertTrue( vd == base );
@@ -53,53 +63,25 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		}
 	}
 
-	public void _testCreateActive() throws IOException {
+	public void testCreateActive() throws IOException {
 		for( File f : fs ) {
 			System.out.println( f );
-			VirtualDisk vd = VirtualDisk.create( f );
+			VirtualDisk vd = VirtualDisk.create( f, VirtualDisk.ACTIVE );
 			VirtualDisk active = vd.getActive();
 			assertTrue( vd == active );
 		}
 	}
 
-	public void _testCreateUnknownGeneration() throws IOException {
+	public void testCreateUnknownGeneration() throws IOException {
 		for( File f : fs ) {
 			System.out.println( f );
 			try {
 				VirtualDisk vd = VirtualDisk.create( f, 55 );
-				fail();
-			} catch( IllegalArgumentException noSuchGeneration ) {
+				fail( "" + f );
+			} catch( NoSuchGenerationException nsge ) {
 			}
 		}
 	}
-
-	public void _testCreateFromVBoxDir() throws IOException {
-		File root = new File( "data/VBox" );
-		if( !root.isDirectory() )
-			return;
-		File[] fs = root.listFiles( (FileFilter)DirectoryFileFilter.INSTANCE );
-		for( File f : fs ) {
-
-			// Have some special files like 'Shared' with are NOT vm dirs..
-			if( !VBoxVM.isVBoxVM( f ) )
-				continue;
-			
-			VBoxVM vm = new VBoxVM( f );
-
-			// if VM has 2+ disks, creating a file from the dir should fail
-			if( vm.getBaseDisks().size() > 1 ) {
-				try {
-					VirtualDisk vd = VirtualDisk.create( f );
-					fail();
-				} catch( IllegalArgumentException expected ) {
-				}
-			} else {
-				// with 1 base disk only, expect to create a disk from dir file
-				VirtualDisk vd = VirtualDisk.create( f );
-			}
-		}
-	}
-
 			
 }
 

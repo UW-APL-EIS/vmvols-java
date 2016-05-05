@@ -10,6 +10,9 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.uw.apl.vmvols.model.virtualbox.VDIDisk;
+import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
+
 /**
  *
  * @author Stuart Maclean
@@ -18,6 +21,9 @@ import org.apache.commons.logging.LogFactory;
  * families: one for VirtualBox disks (contained normally in a file
  * with a .vdi suffix) and one for VMWare disks (contained normally in
  * a file with a .vmdk suffix).
+ *
+ * Contains also important static methods for VirtualDisk creation, given
+ * host files (.vdi, .vmdk).
  *
  * VM engines often support 'Snapshotting' of virtual machines.
  * VirtualBox and VMware do.  Snapshotting freezes VM content,
@@ -40,16 +46,16 @@ import org.apache.commons.logging.LogFactory;
  * events:
  *
  * VM created, with a single virtual hard drive (disk).  This is our
- * base disk.
+ * (first) base disk.
  *
- * Later, snapshot of the VM taken, the single disk has its content
- * frozen.  No further writes go to this version of the disk.  VM
- * creates a new file to which further writes are done.  The new file
- * represents generation 2 of the disk, the original disk is still
- * generation 1.
+ * Later, a snapshot of the VM is taken, and the single disk has its
+ * content frozen.  No further writes go to this version of the disk.
+ * VM creates a new file to which further writes are done.  The new
+ * file represents generation 2 of the disk, the original disk is
+ * still generation 1.
  *
  * Later, a second hard drive added to the VM.  It is again a base
- * disk, and has generation 1, not 2.
+ * disk, and by definition has generation 1.
  *
  * Later, a second snapshot of the VM taken.  Our first hard drive now
  * has 3 generations, and our second disk has two generations.
@@ -63,26 +69,38 @@ import org.apache.commons.logging.LogFactory;
  * baseDisks
  * identified generations
  *
- * The basic API for accessing the data of virtual disks is very small, just
- *
- * getInputStream
- * getRandomAccess
- *
  * Example usage:
  *
  <code>
- // No generation supplied, retrieves ACTIVE disk, highest generation
+ // No generation given, retrieves generation of virtual disk whose source
+ // is supplied file
  VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ) );
 
  // Some identified generation...
  VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ), 2 );
 
+ // Base disk, generation 1 ...
+ VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ), BASE );
+
+ // Active disk, highest generation...
+ VirtualDisk vd = VirtualDisk.create( new File( "foo.vdi" ), ACTIVE );
+
+ // Virtual Machine enclosing any VD is available
+ VirtualMachine vm = vd.getVirtualMachine();
+</code>
+
+ * The basic API for accessing the data of virtual disks is very small, just
+ *
+ * getInputStream
+ * getRandomAccess
+
+ <code>
  java.io.InputStream is = vd.getInputStream();
 
  RandomAccessVirtualDisk ravd = vd.getRandomAccess();
  </code>
 
- * Combined with our 'fuse' module these are however enough to provide
+ * Combined with our 'fuse' module, the API above is enough to provide
  * complete access to whole disk data at the host system call level,
  * i.e. by tools like Sleuthkit.  In fact just RandomAccessVirtualDisk
  * suffices in the fuse 'backend'.
@@ -96,89 +114,142 @@ abstract public class VirtualDisk {
 
 	/**
 	 * When we care just about a single disk and not all the disks
-	 * associated with a full VM.  Allows user to skip use of
+	 * associated with a full VM. Allows user to skip use of
 	 * the VirtualMachine class altogether.
 	 *
-	 * Convenience class for the full create method, with caller
-	 * expecting/getting the active disk derived from the one
-	 * identified by suppled File f.
+	 * Convenience call for the full create method, with caller
+	 * expecting/getting the actual VirtualDisk generation whose
+	 * source host file is the file passed in to the create.  See also
+	 * other create call where an explicit generation is supplied.
 	 *
-	 * @param f a File on the host system identifying the
-	 * <em>base</em> disk of one of the hard disks in a VM.  By base,
-	 * we mean the first-created file representing a virtual disk, and
-	 * not any file representing a Snapshot delta.
-	 *
-	 * The parameter f can also identity a VM directory on the host
-	 * file system, but only if that VM has a single disk. Otherwise f
-	 * is ambiguous and an exact base virtual disk host file must be
-	 * supplied instead.
 	 */
 	static public VirtualDisk create( File f ) throws IOException {
-		return create( f, ACTIVE );
+		return create( f, SELF );
 	}
 
 	/**
-	 * @param f a File on the host system identifying the
-	 * <em>base</em> disk of one of the hard disks in a VM.  By base,
-	 * we mean the first-created file representing a virtual disk, and
-	 * not any file representing a Snapshot delta.
+	 * @param f a File on the host system containing some snapshot of
+	 * some virtual disk within some virtual machine, OR perhaps a
+	 * standalone/orphaned .vmdk file as used/generated by
+	 * e.g. packer/vagrant or that is bundled with an ovf/ova file.
 	 *
-	 * The parameter f can also identity a VM directory on the host
-	 * file system, but only if that VM has a single disk. Otherwise f
-	 * is ambiguous and an exact base virtual disk host file must be
-	 * supplied instead.
+	 * File f is <em>not</em> to be a VM directory.  For directories
+	 * that host VMs, use the VirtualMachine.create() api instead.
 	 *
 	 * @param generation, where 1 is a base disk, or
 	 * VirtualDisk.ACTIVE for the active disk (so user need not have
-	 * to know/calculate the active disk's generation).
+	 * to know/calculate the active disk's generation), or
+	 * VirtualDisk.SELF meaning that the VirtualDisk's source file
+	 * should be f itself.
 	 */
 	static public VirtualDisk create( File f, int generation )
 		throws IOException {
-		
-		VirtualMachine vm = VirtualMachine.create( f );
-		if( vm == null )
-			throw new IllegalArgumentException( "Unknown host disk file: " +
-												f );
 
-		List<VirtualDisk> bases = vm.getBaseDisks();
-
-		System.out.println( bases );
-
+		if( !f.exists() )
+			throw new IllegalArgumentException( "No such file: " + f );
+			
 		if( f.isDirectory() ) {
-			if( bases.size() > 1 ) {
-				List<File> fs = new ArrayList<File>();
-				for( VirtualDisk vd : bases )
-					fs.add( vd.getPath() );
-				throw new IllegalArgumentException
-					( "Ambiguous request, VM dir " + f + " has " +
-					  fs.size() + " disks: " + fs );
-			}
-			VirtualDisk vd = bases.get(0);
-			return ( generation == ACTIVE ) ? vd.getActive() :
-				vd.getGeneration( generation );
+			throw new IllegalArgumentException( "Is a VM directory? " + f );
 		}
 
-		VirtualDisk vd = null;
-		for( VirtualDisk base : bases ) {
-			System.out.println( "B : "+ base.getPath() );
-			System.out.println( "F : "+ f );
-			if( base.getPath().equals( f ) ) {
-				vd = base;
+		File dir = f.getParentFile();
+		try {
+			VirtualMachine vm = VirtualMachine.create( dir );
+			return create( vm, f, generation );
+		} catch( IllegalArgumentException notVMDirWeUnderstand ) {
+			/*
+			  If f were a Snapshot, it could be in a sub-dir (Snapshots?)
+			  of the VM home, so try this too...
+			*/
+			dir = dir.getParentFile();
+			try {
+				VirtualMachine vm = VirtualMachine.create( dir );
+				return create( vm, f, generation );
+			} catch( IllegalArgumentException notVMDirWeUnderstandEither ) {
+				return createOrphan( f );
+			}
+		}
+	}
+
+	static private VirtualDisk create( VirtualMachine vm,
+									   File f, int generation )
+		throws IOException {
+
+		/*
+		  Given the VM, we can compose ALL its VirtualDisks, meaning
+		  all snapshots of all drives.  Somewhere in that set is a
+		  VirtualDisk whose source file should be the supplied file f.
+		  Once matched, go on to derive the generation of that VD
+		  matching the supplied generation.
+		*/
+		List<VirtualDisk> allDisks = new ArrayList();
+		List<VirtualDisk> actives = vm.getActiveDisks();
+		allDisks.addAll( actives );
+		for( VirtualDisk vd : actives ) {
+			List<VirtualDisk> ancs = vd.getAncestors();
+			allDisks.addAll( ancs );
+		}
+		VirtualDisk match = null;
+		File fCanon = f.getCanonicalFile();
+		for( VirtualDisk vd : allDisks ) {
+			if( vd.getPath().getCanonicalFile().equals( fCanon ) ) {
+				match = vd;
 				break;
 			}
 		}
-		/*
-		  if vm != null, we should be able to locate the disk associated
-		  with f, so not locating it is a logic error
-		*/
-		if( vd == null )
-			throw new IllegalStateException
-				( "Cannot locate disk in VM built from " + f );
-
-		return ( generation == ACTIVE ) ? vd.getActive() :
-			vd.getGeneration( generation );
+		if( match == null )
+			throw new IllegalArgumentException( "Cannot associate " +
+												f + " with VM " +
+												vm.getName() );
+		match.vm = vm;
+		switch( generation ) {
+		case SELF:
+			return match;
+		case BASE:
+			return match.getBase();
+		case ACTIVE:
+			return match.getActive();
+		default:
+			return match.getGeneration( generation );
+		}
 	}
 
+	static private VirtualDisk createOrphan( File f ) throws IOException {
+		VirtualDisk vd = null;
+		String name = f.getName();
+		if( false ) {
+		} else if( name.endsWith( VDIDisk.FILESUFFIX ) ) {
+			vd = VDIDisk.readFrom( f );
+		} else if( name.endsWith( VMDKDisk.FILESUFFIX ) ) {
+			vd = VMDKDisk.readFrom( f );
+		} else {
+			throw new IllegalArgumentException
+				( "Cannot create virtual disk from: " + f );
+		}
+
+		/*
+		  Built a valid 'orphaned' VirtualDisk.  Need to next create
+		  an 'anonymous' VM to host it
+		*/
+		final List<VirtualDisk> vds = new ArrayList();
+		vds.add( vd );
+		final String namef = name;
+		vd.vm = new VirtualMachine() {
+				@Override
+				public String getName() {
+					return namef;
+				}
+				@Override
+				public List<VirtualDisk> getBaseDisks() {
+					return vds;
+				}
+				@Override
+				public List<VirtualDisk> getActiveDisks() {
+					return getBaseDisks();
+				}
+			};
+		return vd;
+	}
 	
 	protected VirtualDisk( File source ) {
 		this.source = source;
@@ -215,6 +286,10 @@ abstract public class VirtualDisk {
 	 */
 	public void setParent( VirtualDisk vd ) {
 		parent = vd;
+	}
+
+	public VirtualMachine getVirtualMachine() {
+		return vm;
 	}
 	
 	/**
@@ -253,8 +328,8 @@ abstract public class VirtualDisk {
 	 * java.io.RandomAccessFile, given read,write and seekable access to
 	 * the virtual disk content.
 	 */
-	abstract public RandomAccessVirtualDisk getRandomAccess( boolean writeable )
-		throws IOException;
+	abstract public RandomAccessVirtualDisk getRandomAccess
+		( boolean writeable ) throws IOException;
 
 	/**
 	 * @return Disk generation, where a newly created, never
@@ -297,23 +372,22 @@ abstract public class VirtualDisk {
 	 * @return the virtual disk in the hierarchy which includes this
 	 * disk and has the specified generation value.
 	 *
-	 * @throws IllegalArgumentException if i denotes some non-existent
+	 * @throws NoSuchGenerationException if i denotes some non-existent
 	 * generation.
 	 */
 	public VirtualDisk getGeneration( int i ) {
 		int g = getGeneration();
+
 		if( g == i )
 			return this;
 		if( i < g ) {
 			if( parent == null )
-				throw new IllegalArgumentException
-					( source + ": No generation " + i );
+				throw new NoSuchGenerationException( i );
 			return parent.getGeneration( i );
 		}
-		// g > i 
+		// i > g 
 		if( child == null )
-			throw new IllegalArgumentException
-				( source + ": No generation " + i );
+			throw new NoSuchGenerationException( i );
 		return child.getGeneration( i );
 	}
 
@@ -339,8 +413,10 @@ abstract public class VirtualDisk {
 
 	protected final File source;
 	protected VirtualDisk parent, child;
+	protected VirtualMachine vm;
 	protected final Log log;
 
+	static public final int SELF = 0;
 	static public final int BASE = 1;
 	static public final int ACTIVE = -1;
 	
