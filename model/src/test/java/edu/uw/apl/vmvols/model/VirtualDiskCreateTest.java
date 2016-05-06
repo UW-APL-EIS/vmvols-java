@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -25,19 +26,38 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
 
 public class VirtualDiskCreateTest extends junit.framework.TestCase {
 
-	Collection<File> fs;
+	Collection<File> fs = new ArrayList();
 	
 	/*
 	  On the Dell Latitude, have a symlink 'data' to our VBox VM home
 	*/
 	protected void setUp() throws Exception {
+
+		String[] suffices = { VMDKDisk.FILESUFFIX, VDIDisk.FILESUFFIX };
 		File root = new File( "data" );
-		if( !root.isDirectory() )
-			return;
-		fs = FileUtils.listFiles
-			( root, new String[] { VMDKDisk.FILESUFFIX, VDIDisk.FILESUFFIX },
-			  true );
-		//		System.out.println( fs );
+		if( root.isDirectory() ) {
+			Collection<File> vmControlled = FileUtils.listFiles
+				( root, suffices, true );
+			fs.addAll( vmControlled );
+		}
+		// Also add any standalone files, e.g. from .ova, packer
+		root = new File( "/home/stuart/playpen/virtualization" );
+		if( root.isDirectory() ) {
+			Collection<File> standalone = FileUtils.listFiles
+				( root, suffices, true );
+			fs.addAll( standalone );
+		}
+
+		root = new File( "/home/stuart/apl/projects/infosec/packer-vms" );
+		if( root.isDirectory() ) {
+			Collection<File> standalone = FileUtils.listFiles
+				( root, suffices, true );
+			fs.addAll( standalone );
+		}
+
+		System.out.println( fs );
+		
+			
 	}
 
 	public void testCreateSelf() throws IOException {
@@ -76,8 +96,21 @@ public class VirtualDiskCreateTest extends junit.framework.TestCase {
 		for( File f : fs ) {
 			System.out.println( f );
 			try {
-				VirtualDisk vd = VirtualDisk.create( f, 55 );
+				VirtualDisk vd = VirtualDisk.create( f, 555 );
 				fail( "" + f );
+			} catch( NoSuchGenerationException nsge ) {
+			}
+		}
+	}
+
+	// Ensure a VD always has its VM member set...
+	public void testHasVirtualMachine() throws IOException {
+		for( File f : fs ) {
+			System.out.println( f );
+			try {
+				VirtualDisk vd = VirtualDisk.create( f );
+				VirtualMachine vm = vd.getVirtualMachine();
+				assertFalse( vm == null );
 			} catch( NoSuchGenerationException nsge ) {
 			}
 		}

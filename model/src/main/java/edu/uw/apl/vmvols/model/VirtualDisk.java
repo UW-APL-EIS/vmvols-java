@@ -166,7 +166,7 @@ abstract public class VirtualDisk {
 				VirtualMachine vm = VirtualMachine.create( dir );
 				return create( vm, f, generation );
 			} catch( IllegalArgumentException notVMDirWeUnderstandEither ) {
-				return createOrphan( f );
+				return createStandalone( f, generation );
 			}
 		}
 	}
@@ -214,7 +214,12 @@ abstract public class VirtualDisk {
 		}
 	}
 
-	static private VirtualDisk createOrphan( File f ) throws IOException {
+	static private VirtualDisk createStandalone( File f, int generation )
+		throws IOException {
+
+		if( generation > BASE )
+			throw new NoSuchGenerationException( generation );
+		
 		VirtualDisk vd = null;
 		String name = f.getName();
 		if( false ) {
