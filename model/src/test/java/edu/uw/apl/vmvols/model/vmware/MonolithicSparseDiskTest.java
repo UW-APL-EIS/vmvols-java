@@ -9,6 +9,15 @@ import java.util.HashSet;
 
 import edu.uw.apl.vmvols.model.Utils;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Tests related to the composition of MonolithicSparseDisks, a variant
+ * of .vmdk files.
+ *
+ * LOOK: We don't appear to be asserting anything??
+ */
+
 public class MonolithicSparseDiskTest extends junit.framework.TestCase {
 
 	public void _testCaine() throws IOException {

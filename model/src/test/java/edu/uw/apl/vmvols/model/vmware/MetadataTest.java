@@ -8,6 +8,14 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Tests related to the metadata (header, grain directory,tables)
+ * found inside all VMWare .vmdk files.
+ *
+ * LOOK: We don't appear to be asserting anything??
+ */
 public class MetadataTest extends junit.framework.TestCase {
 	
 	protected void setUp() {
@@ -27,9 +35,16 @@ public class MetadataTest extends junit.framework.TestCase {
 		testRoot( dir );
 	}
 	
+	public void testLocalData() throws Exception {
+		File dir = new File( "./data/vmware/" );
+		if( !dir.isDirectory() )
+			return;
+		testRoot( dir );
+	}
+	
 	private void testRoot( File dir ) throws IOException {	
 		Collection<File> fs = FileUtils.listFiles
-			( dir, new String[] { "vmdk" }, true );
+			( dir, new String[] { VMDKDisk.FILESUFFIX }, true );
 		System.out.println( "Located: " + fs.size() );
 		for( File f : fs ) {
 			try {
