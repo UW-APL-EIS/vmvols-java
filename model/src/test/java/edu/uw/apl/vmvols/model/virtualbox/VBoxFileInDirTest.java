@@ -19,7 +19,7 @@ import edu.uw.apl.vmvols.model.vmware.VMDKDisk;
  *
  * This test no no longer valid, we have abandoned the method of
  * building a full VM object from one named .vdi file IN a vbox dir.
- * Use VirtualDisk.create instead.
+ * Use {@link edu.uw.apl.vmvols.model.VirtualDisk.create} instead.
  */
 
 public class VBoxFileInDirTest extends junit.framework.TestCase {

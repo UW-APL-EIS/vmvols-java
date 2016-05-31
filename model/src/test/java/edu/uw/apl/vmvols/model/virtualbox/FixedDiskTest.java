@@ -10,7 +10,7 @@ import edu.uw.apl.vmvols.model.Utils;
 /**
  * @author Stuart Maclean
  *
- * Test cases for class virtualbox.FixedDisk.  We have prepared some
+ * Test cases for class {@link FixedDisk}.  We have prepared some
  * Virtualbox VMs with FixedDisk-created disks, use these in the
  * tests.
  */

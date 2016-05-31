@@ -11,6 +11,8 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
 /**
  * @author Stuart Maclean
  *
+ * Test various properties of any VirtualBox vm with disks having many
+ * (2+) generations, i.e. at least one snapshot taken.
  */
 
 public class VBoxMultiGenerationTest extends junit.framework.TestCase {

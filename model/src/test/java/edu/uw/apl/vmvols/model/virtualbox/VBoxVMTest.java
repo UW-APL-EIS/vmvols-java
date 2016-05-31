@@ -12,6 +12,8 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
  * Tests for {@link VBoxVM}
  *
  * @author Stuart Maclean
+ *
+ * LOOK: We are not asserting anything here.  Valid test case??
  */
 
 public class VBoxVMTest extends junit.framework.TestCase {

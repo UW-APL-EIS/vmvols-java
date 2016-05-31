@@ -10,6 +10,14 @@ import org.apache.commons.codec.binary.Hex;
 import edu.uw.apl.vmvols.model.RandomAccessVirtualDisk;
 import edu.uw.apl.vmvols.model.Utils;
 
+/**
+ * @author Stuart Maclean
+ *
+ * Presumably some assertion that a virtual disk's contents when
+ * hashed under e.g. md5, match some known/expected value.  Not seeing
+ * any reference md5 hash?
+ */
+
 public class MD5Test extends junit.framework.TestCase {
 
 	public void testNuga2() throws Exception {

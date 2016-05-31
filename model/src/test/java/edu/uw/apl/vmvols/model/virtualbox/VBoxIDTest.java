@@ -14,6 +14,8 @@ import edu.uw.apl.vmvols.model.VirtualDisk;
  * Test correct opening, disk identfication, etc of a set of VirtualBox
  * VMs, nominally found under a single root.  We likely build a symlink
  * from our 'real' VBox VM directory (typically ~/VBox) to ./data/VBox
+ *
+ * LOOK: We are not asserting anything here.  Valid test case??
  */
 
 public class VBoxIDTest extends junit.framework.TestCase {
