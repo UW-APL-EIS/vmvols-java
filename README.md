@@ -148,7 +148,9 @@ $ mmls mount/windowsVM/sda
 ```
 # CLI
 
-See the ./cli module.
+Contains several tools for interrogation of the meta-data of .vdi and
+.vmdk files on the host, and also a simple tool to cat the entire
+contents of a virtual disk. See the [cli] (./cli) module for more details.
 
 To finish...
 
