@@ -8,17 +8,17 @@ host-based software.
 Platforms
 ---------
 
-The vmvols codebase is pure Java.  We have developed Java class
+The vmvols-java codebase is pure Java.  We have developed Java class
 libraries to read (and write!) VirtualBox .vdi files and VMWare .vmdk
 files (for host-based VMWare products only, not the esxi/vmfs-derived
 ones).
 
-That said, the most useful aspect of vmvols is its use of FUSE to
-expose VM drive contents under mount points on the host.  This
-limits the usefulness of the 'fuse' sub-module to platforms
-supporting FUSE, which I think means Linux and Mac OSX (?)  Note that
-we use FUSE4J to bridge the Java world of vmvols to the C world of FUSE.
-More info on FUSE4J at https://github.com/uw-dims/fuse4j.
+That said, the most useful aspect of vmvols-java is its use of FUSE to
+expose VM drive contents under mount points on the host.  This limits
+the usefulness of the 'fuse' sub-module to platforms supporting FUSE,
+which I think means Linux and Mac OSX (?)  Note that we use FUSE4J to
+bridge the Java world of vmvols-java to the C world of FUSE.  More
+info on FUSE4J at https://github.com/uw-dims/fuse4j.
 
 Required Tools
 --------------
@@ -50,7 +50,7 @@ Build/Install
 ------------
 
 ```
-$ cd /path/to/vmvols
+$ cd /path/to/vmvols-java
 
 $ mvn install
 
@@ -68,10 +68,12 @@ tests, try:
 $ mvn test -Ptester
 ```
 
+Some tests may take a while.
+
 Modules
 -------
 
-The vmvols codebase is organised as four Maven 'modules', with a
+The vmvols-java codebase is organised as four Maven 'modules', with a
 parent pom at the root level.  The modules are as follows
 
 * model
@@ -84,9 +86,9 @@ parent pom at the root level.  The modules are as follows
 
 # Model
 
-The primary vmvols module.  Contains pure Java parsers for .vdi and
-.vmdk file formats, and so enables access to virtual disk content with
-the VM powered off.  Indeed no VirtualBox/VMware software need be
+The primary vmvols-java module.  Contains pure Java parsers for .vdi
+and .vmdk file formats, and so enables access to virtual disk content
+with the VM powered off.  Indeed no VirtualBox/VMware software need be
 present at all.  The primary classes in this module are probably
 
 * [VirtualDisk]
@@ -98,12 +100,12 @@ present at all.  The primary classes in this module are probably
 
 All .vdi files are supported. For .vmdk disks, currently the
 'monolithic sparse' and 'stream-optimized sparse' variants are
-supported.  The latter is the format used in .ovf/.ova files, and by
-Packer, Vagrant tools.  The former is likely what you get if you
-create new VMs from within e.g. VMware Workstation.
+supported.  The former is likely what you get if you create new VMs
+from within e.g. VMware Workstation.  The latter is the format used in
+.ovf/.ova files, and by Packer, Vagrant tools.
 
-Access to virtualdisk content is then via these two methods, defined
-in VirtualDisk:
+Access to virtual disk content is then via these two methods, defined
+(abstract) in the base class VirtualDisk:
 
 * getInputStream
 
@@ -118,7 +120,7 @@ This module contains classes bridging the model classes (above) to the
 FUSE4J api, and from there to [FUSE]
 (https://github.com/libfuse/libfuse).
 
-Also included is arguably the most useful tool in all of vmvols ---
+Also included is arguably the most useful tool in all of vmvols-java ---
 the vmmount shell script driver for the class which enables host-level
 access to virtual machine disk content. See [vmmount] (./fuse/vmmount)
 and its [Java sources] (./fuse/src/main/java/edu/uw/apl/vmvols/fuse/)
@@ -127,7 +129,7 @@ for the gory details.
 To use vmmount, just locate one of your local VMs:
 
 ```
-$ cd /path/to/vmvols/fuse
+$ cd /path/to/vmvols-java/fuse
 
 $ mvn package
 
@@ -141,7 +143,7 @@ mount/
    sda
    
 // mmls is a Sleuthkit tool for volume system inspection
-// This would be the C: drive of the VM above
+// This disk would contain/be the C: drive of the VM above
 $ mmls mount/windowsVM/sda
 ```
 # CLI
@@ -160,7 +162,7 @@ To finish
 Motivation/FAQ
 --------------
 
-Why use vmvols?
+Why use vmvols-java?
 
 * You wish to perform host forensics on virtual machines which are
   powered off.  Sleuthkit is what we use (and see [TSK4J]
@@ -169,15 +171,15 @@ Why use vmvols?
 * It is more fully-featured than existing VM mount utilities. Or
   perhaps we should say "contains features existing tools do
   not". Under a single mount point, you can inspect many Snapshots,
-  over many disks (e.g. C:, D:), of many VMs.
+  over many disks (e.g. C:, D:), of many VMs simultaneously.
 
-* You don't have a local VirtualBox, VMWare installation. vmvols is
+* You don't have a local VirtualBox, VMWare installation. vmvols-java is
   pure Java, it doesn't rely on any VM manager libraries/tools.
 
 * You prefer Java over C.  The file-format parsers for .vdi, .vmdk
 files are in Java.
 
-Why use vmvols when I could just use...
+Why use vmvols-java when I could just use...
 
 * VMware Virtual Disk Manager?
 
@@ -196,7 +198,7 @@ capacity, I thought others may benefit too.
 * I thought it might be useful in a malware analysis workflow using
 say Cuckoo Sandbox.  We take Snapshots before and after a run, mount
 both Snapshots, and run Sleuthkit tools over the two filesystems to
-infer dischanges.
+infer disk changes.
 
 Local Repository
 ----------------
@@ -215,14 +217,14 @@ loader code is [here]
 fuse bridge that is Fuse4j is [there]
 (https://github.com/uw-dims/fuse4j).
 
-To save the vmvols user the chore of building and installing these
+To save the vmvols-java user the chore of building and installing these
 dependencies, we are bundling these compiled artifacts into a
 'project-local Maven repo' at [./.repository](./.repository).  The
 relevant [pom] (./fuse/pom.xml) refers to this repo to resolve the
 artifact dependencies.  The project-local repo looks like this:
 
 ```
-$ cd /path/to/vmvols
+$ cd /path/to/vmvols-java
 $ tree .repository/
 .repository/
 `-- edu
