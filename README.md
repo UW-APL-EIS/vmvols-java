@@ -160,7 +160,6 @@ See the ./samples module.
 
 To finish
 
-```
 Motivation/FAQ
 --------------
 
