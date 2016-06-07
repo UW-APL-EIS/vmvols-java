@@ -126,7 +126,7 @@ access to virtual machine disk content. See [vmmount] (./fuse/vmmount)
 and its [Java sources] (./fuse/src/main/java/edu/uw/apl/vmvols/fuse/)
 for the gory details.
 
-To use vmmount, just locate one of your local VMs:
+To use vmmount, just locate one (or more) of your local VMs:
 
 ```
 $ cd /path/to/vmvols-java/fuse
@@ -145,7 +145,49 @@ mount/
 // mmls is a Sleuthkit tool for volume system inspection
 // This disk would contain/be the C: drive of the VM above
 $ mmls mount/windowsVM/sda
+'''
+
+You are not limited to one VM, nor to VMs with a single hard drive.
+vmmount supports many VMs simultaneously, and VMs may have 2+ disks.
+
 ```
+$ ./vmmount /path/to/VM1 /path/to/VM2/ mount
+
+$ tree mount
+mount/
+ VM1
+   sda
+ VM2
+   sda
+   sdb
+```
+
+With the -s option, you can even see all snapshots, again
+simultaneously
+
+```
+$ ./vmmount -s /path/to/VM1 /path/to/VM2/ mount
+
+$ tree mount
+mount/
+ VM1
+   sda1
+   sda2
+// sda is a 'symlink' to sda2, representing the 'active' state of the
+// disk.  It is the 2nd generation of data for this drive
+   sda	
+
+VM2
+   sda
+   sdb
+```
+
+Complete options for vmmount are via the -h option:
+
+```
+$ ./vmmount -h
+```
+
 # CLI
 
 Contains several tools for interrogation of the meta-data of .vdi and
