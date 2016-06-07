@@ -145,7 +145,7 @@ mount/
 // mmls is a Sleuthkit tool for volume system inspection
 // This disk would contain/be the C: drive of the VM above
 $ mmls mount/windowsVM/sda
-'''
+```
 
 You are not limited to one VM, nor to VMs with a single hard drive.
 vmmount supports many VMs simultaneously, and VMs may have 2+ disks.
