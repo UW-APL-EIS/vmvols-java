@@ -10,6 +10,10 @@
 #
 # vmmount -h
 
+# If you were to move the jars to somewhere more 'permanent', perhaps
+# /usr/share/java/, update JARSHOME accordingly.  We are just a local
+# reference based on this script's location.
+
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target
 
@@ -21,11 +25,12 @@ ARTIFACT=vmvols-fuse
 # should many (stale) versions be present.
 JAR=`ls $JARSHOME | grep $ARTIFACT | sort -n -r | head -1`
 
+JARPATH=$JARSHOME/$JAR
 PACKAGE=edu.uw.apl.vmvols.fuse
 CLAZZ=Main
 
 #JAVA_OPTS="-Dlog4j.debug"
 
-exec java $JAVA_OPTS -classpath target/$JAR $PACKAGE.$CLAZZ "$@"
+exec java $JAVA_OPTS -classpath $JARPATH $PACKAGE.$CLAZZ "$@"
 
 # eof
