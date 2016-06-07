@@ -11,8 +11,8 @@
 # vmmount -h
 
 # If you were to move the jars to somewhere more 'permanent', perhaps
-# /usr/share/java/, update JARSHOME accordingly.  We are just a local
-# reference based on this script's location.
+# /usr/share/java/, update JARSHOME accordingly.  We are using a
+# simple relative directory, based on this script's location.
 
 DIRNAME=`dirname $0`
 JARSHOME=$DIRNAME/target
